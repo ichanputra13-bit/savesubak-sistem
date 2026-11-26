@@ -1,0 +1,955 @@
+'use client'
+
+import 'leaflet/dist/leaflet.css'
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MapContainer, Marker, Polygon, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import L from 'leaflet'
+import '@geoman-io/leaflet-geoman-free'
+import area from '@turf/area'
+import { computePlotsCenter, plotCentroid, PHASE_LABEL, LAND_CATEGORY_COLORS, LAND_CATEGORY_NULL_COLOR, LAND_CATEGORY_LABEL, statusLahanToColor, type PlotGeoJSON } from '@/lib/plot-geo'
+import CompassIndicator from './CompassIndicator'
+import KmlImportModal from '@/components/kawasan/KmlImportModal'
+import { fmtDateLong as fmtDate } from '@/lib/format'
+
+export type { PlotGeoJSON }
+
+export interface PlotData {
+  id: string
+  farmer_name: string
+  nama_penggarap?: string | null
+  nama_pemilik?: string | null
+  crop_variety: string | null
+  area_ha: number
+  geo_data: PlotGeoJSON | null
+  // Data tooltip hover — diisi dari server, opsional untuk backward compat
+  active_variety?: string | null
+  latest_ndvi?: number | null
+  latest_ndwi?: number | null
+  latest_nbr?: number | null
+  latest_cloud_cover?: number | null
+  latest_phase?: string | null
+  latest_scan_date?: string | null
+  // Baris terbaru yang fase-nya VALID (skip null-karena-awan) — bisa beda
+  // tanggal dari latest_scan_date. Dipakai PhaseBadge cloud-aware supaya
+  // tabel kawasan tidak salah bilang "Belum ada scan" kalau sebenarnya ada
+  // histori fase valid, cuma scan TERBARU yang kebetulan tertutup awan.
+  latest_valid_phase?: string | null
+  latest_valid_phase_date?: string | null
+  status_lahan?: string | null
+}
+
+interface PendingPlot {
+  geoJSON: PlotGeoJSON
+  areaHa: number
+  latlngs: [number, number][]
+}
+
+// ─── Sub-component: aktifkan Geoman dan dengarkan pm:create ───────────────────
+function GeomanController({
+  isDrawing,
+  onCreated,
+}: {
+  isDrawing: boolean
+  onCreated: (p: PendingPlot) => void
+}) {
+  const map = useMap()
+
+  const handleCreate = useCallback(
+    (e: any) => {
+      const layer = e.layer as L.Polygon
+      const feature = layer.toGeoJSON()
+      const geom = feature.geometry as PlotGeoJSON
+
+      const areaM2 = area(feature)
+      const areaHa = Math.round((areaM2 / 10000) * 1000) / 1000
+
+      // latlngs dari Leaflet sudah dalam format [lat, lng]
+      const raw = (layer.getLatLngs()[0] as L.LatLng[]).map(
+        (ll) => [ll.lat, ll.lng] as [number, number]
+      )
+
+      map.removeLayer(layer) // hapus layer PM; React akan render ulang via state
+      onCreated({ geoJSON: geom, areaHa, latlngs: raw })
+    },
+    [map, onCreated]
+  )
+
+  useEffect(() => {
+    map.on('pm:create', handleCreate)
+    return () => { map.off('pm:create', handleCreate) }
+  }, [map, handleCreate])
+
+  useEffect(() => {
+    if (isDrawing) {
+      map.pm.enableDraw('Polygon', { snappable: true, finishOn: 'dblclick' })
+    } else {
+      map.pm.disableDraw()
+    }
+  }, [map, isDrawing])
+
+  return null
+}
+
+// ─── Sub-component: klik di area TANPA polygon (kosong / batas desa / label)
+// menutup tooltip yang sedang nempel. Klik pada polygon petak sendiri sudah
+// stopPropagation di eventHandlers-nya, jadi listener ini tidak pernah menimpa
+// tooltip yang baru saja dibuka oleh klik polygon itu sendiri. ──────────────
+function ClickOutsideResetter({ onReset }: { onReset: () => void }) {
+  useMapEvents({ click: onReset })
+  return null
+}
+
+// ─── Sub-component: fly to center saat trigger berubah ───────────────────────
+function FlyToCenter({ plots, trigger }: { plots: PlotData[]; trigger: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (trigger === 0) return
+    const center = computePlotsCenter(plots)
+    if (center) map.flyTo(center, 16, { duration: 1.5 })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trigger])
+  return null
+}
+
+// Tipe data hasil fetch Nominatim yang sudah diproses — dioper ke renderer
+interface DesaBoundaryData {
+  // [polygon][ring][point] — Leaflet [lat,lng] format, siap pakai untuk L.polygon
+  polygons: Array<Array<Array<[number, number]>>>
+  midLat: number
+  midLon: number
+  name: string
+}
+
+// ─── Sub-component: render batas desa (terima data jadi, tidak fetch) ─────────
+// Fetch dilakukan di KawasanMapInner agar hanya terjadi sekali dan tidak
+// terpengaruh unmount/remount akibat zoom (react-leaflet MapContainer behavior).
+function DesaBoundaryRenderer({ data }: { data: DesaBoundaryData }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const addedLayers: L.Layer[] = []
+
+    const paneName = 'desaBoundaryPane'
+    if (!map.getPane(paneName)) {
+      const pane = map.createPane(paneName)
+      pane.style.zIndex = '450'
+      pane.style.pointerEvents = 'none'
+    }
+
+    const pathStyle: L.PathOptions = {
+      color: '#C98A2E',
+      weight: 1.5,
+      dashArray: '8 5',
+      fillOpacity: 0,
+      opacity: 0.9,
+      pane: paneName,
+      // interactive:false WAJIB — tanpa ini, Leaflet tetap menandai path sebagai
+      // `.leaflet-interactive` (CSS bawaan Leaflet: pointer-events:auto), yang
+      // MENIMPA `pane.style.pointerEvents = 'none'` di atas. Akibatnya batas desa
+      // (fill tak terlihat, fillOpacity 0) tetap menangkap klik di seluruh area
+      // interiornya — termasuk area yang bertumpuk dengan polygon petak asli di
+      // bawahnya (z-index pane 450 > overlayPane 400) — sehingga klik ke petak
+      // solid di lokasi tertentu tidak pernah sampai ke <Polygon> petak sama sekali.
+      interactive: false,
+    }
+
+    for (const rings of data.polygons) {
+      addedLayers.push(L.polygon(rings, pathStyle).addTo(map))
+    }
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:rgba(201,138,46,0.9);color:white;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3)">${data.name}</div>`,
+      iconAnchor: [0, 0],
+    })
+    addedLayers.push(L.marker([data.midLat, data.midLon], { icon, interactive: false }).addTo(map))
+
+    return () => { addedLayers.forEach((l) => map.removeLayer(l)) }
+  }, [map, data])
+
+  return null
+}
+
+// ─── Sub-component: fly (fitBounds) ke polygon petak spesifik ─────────────────
+function FlyToPlot({
+  target,
+  plots,
+  onArrive,
+}: {
+  target: { plotId: string; counter: number } | null
+  plots: PlotData[]
+  onArrive?: (plot: PlotData, containerPoint: { x: number; y: number }) => void
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!target) return
+    const plot = plots.find((p) => p.id === target.plotId)
+    if (!plot?.geo_data?.coordinates?.[0]) return
+    const positions = plot.geo_data.coordinates[0].map(
+      ([lng, lat]) => [lat, lng] as [number, number]
+    )
+    const bounds = L.latLngBounds(positions)
+    map.flyToBounds(bounds, { padding: [90, 90], maxZoom: 19, duration: 1.2 })
+    map.once('moveend', () => {
+      const c = plotCentroid(plot)
+      if (c && onArrive) {
+        const pt = map.latLngToContainerPoint(c)
+        onArrive(plot, { x: pt.x, y: pt.y })
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target?.counter])
+
+  return null
+}
+
+// ─── Sub-component: flyTo + render pin hasil search ──────────────────────────
+function SearchPinLayer({ pin }: { pin: [number, number] | null }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (pin) map.flyTo(pin, Math.max(map.getZoom(), 17), { duration: 1.2 })
+  }, [map, pin])
+
+  const pinIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: '',
+        html: `<div style="width:22px;height:22px;background:#ef4444;border-radius:50%;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.45)"></div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      }),
+    []
+  )
+
+  if (!pin) return null
+  return <Marker position={pin} icon={pinIcon} />
+}
+
+// ─── Tooltip hover polygon ───────────────────────────────────────────────────
+const STATUS_LAHAN_LABEL: Record<string, string> = {
+  organik: 'Organik',
+  konversi: 'Konversi',
+  regenerative: 'Regenerative',
+  konvensional: 'Konvensional',
+}
+
+function PlotTooltip({ plot, pos }: { plot: PlotData; pos: { x: number; y: number } }) {
+  const variety = plot.active_variety ?? null
+  const varietyLabel = variety ?? 'Belum ada musim tanam aktif'
+  const varietyEmpty = !variety
+
+  // Tooltip mengikuti kursor. Kalau kursor dekat tepi kanan (x besar),
+  // geser ke kiri kursor supaya tidak keluar layar.
+  const TOOLTIP_WIDTH = 224 // ~max-w-[220px] + padding
+  const OFFSET = 14
+  const flipLeft = pos.x + TOOLTIP_WIDTH + OFFSET > window.innerWidth - 20
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    top: Math.max(4, pos.y - 10),
+    left: flipLeft ? pos.x - TOOLTIP_WIDTH - OFFSET : pos.x + OFFSET,
+    pointerEvents: 'none',
+    zIndex: 800,
+  }
+
+  return (
+    <div style={style}>
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-3 min-w-[180px] max-w-[220px]">
+        {/* Header: nama penggarap */}
+        <p className="text-xs font-semibold text-gray-800 truncate mb-1.5">
+          {plot.nama_penggarap ?? plot.farmer_name}
+        </p>
+        <div className="space-y-1">
+          {plot.status_lahan && (
+            <Row label="Status">
+              <span className="text-gray-700">{STATUS_LAHAN_LABEL[plot.status_lahan] ?? plot.status_lahan}</span>
+            </Row>
+          )}
+          <Row label="Varietas">
+            <span className={varietyEmpty ? 'text-gray-400 italic' : 'text-gray-700'}>
+              {varietyLabel}
+            </span>
+          </Row>
+          <Row label="Luas">
+            <span className="text-gray-700">{plot.area_ha} ha</span>
+          </Row>
+          {plot.latest_scan_date != null ? (
+            <>
+              <Row label="Fase *">
+                <span className="text-gray-700">
+                  {plot.latest_phase ? (PHASE_LABEL[plot.latest_phase] ?? plot.latest_phase) : '—'}
+                </span>
+              </Row>
+              <Row label="NDVI">
+                <span className={`font-mono font-medium ${
+                  plot.latest_ndvi == null ? 'text-gray-400' :
+                  plot.latest_ndvi >= 0.5 ? 'text-green-700' :
+                  plot.latest_ndvi >= 0.3 ? 'text-yellow-700' :
+                  'text-gray-500'
+                }`}>
+                  {plot.latest_ndvi != null ? plot.latest_ndvi.toFixed(3) : '—'}
+                </span>
+              </Row>
+              <p className="text-[10px] text-gray-400 pt-0.5">
+                Scan {fmtDate(plot.latest_scan_date)}
+              </p>
+              <p className="text-[9px] text-gray-300 pt-0.5">
+                * Fase: estimasi otomatis 1 titik data satelit, belum tentu sesuai kondisi lapangan (lahan sudah panen bisa saja masih berlabel fase lama). Konfirmasi ke petani/pekaseh.
+              </p>
+            </>
+          ) : (
+            <Row label="Scan"><span className="text-gray-400 italic">Belum ada data</span></Row>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-[10px] text-gray-400 shrink-0">{label}</span>
+      <span className="text-xs text-right truncate">{children}</span>
+    </div>
+  )
+}
+
+// ─── Komponen utama ────────────────────────────────────────────────────────────
+interface Props {
+  kawasanId: string
+  initialPlots: PlotData[]
+  flyToggle?: number
+  flyToPlot?: { plotId: string; counter: number } | null
+  region?: string
+  boundaryGeojson?: Record<string, unknown> | null
+  // null/undefined = tidak ada filter aktif, semua petak tampil normal.
+  // Kalau berisi Set, petak yang id-nya TIDAK ada di dalamnya (tidak cocok
+  // search/filter) tetap digambar tapi dipudarkan — bukan disembunyikan.
+  matchedPlotIds?: Set<string> | null
+}
+
+// Format yang disimpan di DB kolom kawasan.boundary_geojson
+interface StoredBoundary {
+  geom: { type: string; coordinates: number[][][] | number[][][][] }
+  bbox: string[]
+  name: string
+  admin_level?: string
+}
+
+function parseStoredBoundary(stored: Record<string, unknown>): DesaBoundaryData | null {
+  try {
+    const s = stored as unknown as StoredBoundary
+    const toLL = (ring: number[][]): Array<[number, number]> =>
+      ring.map(([lng, lat]) => [lat, lng] as [number, number])
+    const polygons: Array<Array<Array<[number, number]>>> = []
+    if (s.geom.type === 'Polygon') {
+      polygons.push((s.geom.coordinates as number[][][]).map(toLL))
+    } else if (s.geom.type === 'MultiPolygon') {
+      for (const poly of s.geom.coordinates as number[][][][]) {
+        polygons.push(poly.map(toLL))
+      }
+    }
+    if (polygons.length === 0) return null
+    return {
+      polygons,
+      midLat: (parseFloat(s.bbox[0]) + parseFloat(s.bbox[1])) / 2,
+      midLon: (parseFloat(s.bbox[2]) + parseFloat(s.bbox[3])) / 2,
+      name: s.name,
+    }
+  } catch {
+    return null
+  }
+}
+
+type Basemap = 'osm' | 'satellite'
+
+const BASEMAPS: Record<Basemap, { url: string; attribution: string; label: string }> = {
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, GIS User Community',
+    label: 'Satelit',
+  },
+  osm: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    label: 'Peta',
+  },
+}
+
+export default function KawasanMapInner({ kawasanId, initialPlots, flyToggle = 0, flyToPlot = null, region = '', boundaryGeojson = null, matchedPlotIds = null }: Props) {
+  const [plots, setPlots] = useState<PlotData[]>(initialPlots)
+  const [basemap, setBasemap] = useState<Basemap>('satellite')
+  const [desaBoundary, setDesaBoundary] = useState<DesaBoundaryData | null>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [pending, setPending] = useState<PendingPlot | null>(null)
+  const [farmerName, setFarmerName] = useState('')
+  const [namaPemilik, setNamaPemilik] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchPin, setSearchPin] = useState<[number, number] | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [hoveredPlot, setHoveredPlot] = useState<PlotData | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
+  const [statusLahan, setStatusLahan] = useState('')
+  const [namaLso, setNamaLso] = useState('')
+  const [nomorSertifikat, setNomorSertifikat] = useState('')
+  const [tanggalKadaluarsa, setTanggalKadaluarsa] = useState('')
+
+  // Cache-first: pakai boundary_geojson dari DB kalau sudah ada, baru ke Nominatim kalau belum.
+  // Dijalankan di level komponen (bukan MapContainer children) agar tidak dipanggil ulang saat zoom.
+  useEffect(() => {
+    if (!region) return
+
+    // 1. Cek DB cache dulu
+    if (boundaryGeojson) {
+      const parsed = parseStoredBoundary(boundaryGeojson)
+      if (parsed) { setDesaBoundary(parsed); return }
+    }
+
+    // 2. Tidak ada di DB — fetch Nominatim, lalu simpan hasilnya
+    const name = region.split(',')[0].trim().replace(/^(Desa|Kelurahan|Banjar)\s+/i, '')
+
+    fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ' Bali Indonesia')}&polygon_geojson=1&format=json&limit=5&extratags=1`,
+      { headers: { 'User-Agent': 'AgriMRV/1.0' } }
+    )
+      .then((r) => r.json())
+      .then((results: Array<{
+        class: string; boundingbox: string[];
+        geojson?: { type: string; coordinates: number[][][] | number[][][][] };
+        extratags?: { admin_level?: string }
+      }>) => {
+        const candidate =
+          results.find(
+            (r) =>
+              r.class === 'boundary' &&
+              (r.geojson?.type === 'Polygon' || r.geojson?.type === 'MultiPolygon') &&
+              Number(r.extratags?.admin_level) >= 6 &&
+              Number(r.extratags?.admin_level) <= 9
+          ) ??
+          results.find((r) => r.geojson?.type === 'Polygon' || r.geojson?.type === 'MultiPolygon')
+
+        if (!candidate?.geojson || !candidate.boundingbox) return
+
+        const bb = candidate.boundingbox
+        const latSpan = parseFloat(bb[1]) - parseFloat(bb[0])
+        const lonSpan = parseFloat(bb[3]) - parseFloat(bb[2])
+        if (latSpan * lonSpan > 0.008) return
+
+        const toLL = (ring: number[][]): Array<[number, number]> =>
+          ring.map(([lng, lat]) => [lat, lng] as [number, number])
+
+        const geom = candidate.geojson
+        const polygons: Array<Array<Array<[number, number]>>> = []
+        if (geom.type === 'Polygon') {
+          polygons.push((geom.coordinates as number[][][]).map(toLL))
+        } else if (geom.type === 'MultiPolygon') {
+          for (const poly of geom.coordinates as number[][][][]) {
+            polygons.push(poly.map(toLL))
+          }
+        }
+        if (polygons.length === 0) return
+
+        setDesaBoundary({
+          polygons,
+          midLat: (parseFloat(bb[0]) + parseFloat(bb[1])) / 2,
+          midLon: (parseFloat(bb[2]) + parseFloat(bb[3])) / 2,
+          name,
+        })
+
+        // Simpan ke DB — fire and forget, halaman berikutnya langsung pakai cache
+        fetch(`/api/kawasan/${kawasanId}/boundary`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            boundary_geojson: {
+              geom: candidate.geojson,
+              bbox: bb,
+              name,
+              admin_level: candidate.extratags?.admin_level,
+            },
+          }),
+        }).catch(() => {})
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region])
+
+  const handleSearch = useCallback(async () => {
+    const q = searchQuery.trim()
+    if (!q) return
+    setIsSearching(true)
+    setSearchError(null)
+
+    // Cek apakah input berupa koordinat "lat, lng"
+    const coordMatch = q.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/)
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1])
+      const lng = parseFloat(coordMatch[2])
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setSearchPin([lat, lng])
+        setIsSearching(false)
+        return
+      }
+    }
+
+    // Nominatim place name search
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'AgriMRV/1.0 (agrimrv@project)' } }
+      )
+      const results = await res.json()
+      if (results.length === 0) {
+        setSearchError('Lokasi tidak ditemukan')
+      } else {
+        setSearchPin([parseFloat(results[0].lat), parseFloat(results[0].lon)])
+      }
+    } catch {
+      setSearchError('Gagal menghubungi layanan pencarian')
+    } finally {
+      setIsSearching(false)
+    }
+  }, [searchQuery])
+
+  const clearSearch = useCallback(() => {
+    setSearchPin(null)
+    setSearchQuery('')
+    setSearchError(null)
+    searchInputRef.current?.focus()
+  }, [])
+
+  const handleCreated = useCallback((p: PendingPlot) => {
+    setIsDrawing(false)
+    setPending(p)
+    setFarmerName('')
+    setNamaPemilik('')
+    setStatusLahan('')
+    setNamaLso('')
+    setNomorSertifikat('')
+    setTanggalKadaluarsa('')
+    setSaveError(null)
+  }, [])
+
+  // Reuse: dipanggil setelah simpan petak baru manual MAUPUN setelah import KML.
+  const refreshPlotsFromServer = useCallback(async () => {
+    const refreshed = await fetch(`/api/plots?kawasan_id=${kawasanId}`)
+    if (refreshed.ok) {
+      const { plots: fresh } = await refreshed.json()
+      setPlots(fresh ?? [])
+      return true
+    }
+    return false
+  }, [kawasanId])
+
+  const handleSave = async () => {
+    if (!pending || !farmerName.trim()) return
+    setSaving(true)
+    setSaveError(null)
+
+    const res = await fetch('/api/plots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kawasan_id: kawasanId,
+        nama_penggarap: farmerName,
+        nama_pemilik: namaPemilik.trim() || null,
+        area_ha: pending.areaHa,
+        geo_data: pending.geoJSON,
+        status_lahan: statusLahan || null,
+        nama_lso: namaLso.trim() || null,
+        nomor_sertifikat: nomorSertifikat.trim() || null,
+        tanggal_kadaluarsa: tanggalKadaluarsa || null,
+      }),
+    })
+
+    if (!res.ok) {
+      const { error } = await res.json()
+      setSaveError(error ?? 'Gagal menyimpan')
+      setSaving(false)
+      return
+    }
+
+    // Refresh daftar plot dari server
+    const refreshedOk = await refreshPlotsFromServer()
+    if (!refreshedOk) {
+      // Tambahkan optimistically agar peta langsung update
+      setPlots((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          farmer_name: farmerName,
+          crop_variety: null,
+          area_ha: pending.areaHa,
+          geo_data: pending.geoJSON,
+          status_lahan: statusLahan || null,
+        },
+      ])
+    }
+
+    setPending(null)
+    setSaving(false)
+    setNamaPemilik('')
+    setStatusLahan('')
+    setNamaLso('')
+    setNomorSertifikat('')
+    setTanggalKadaluarsa('')
+  }
+
+  const handleCancel = () => {
+    setPending(null)
+    setIsDrawing(false)
+    setNamaPemilik('')
+    setStatusLahan('')
+    setNamaLso('')
+    setNomorSertifikat('')
+    setTanggalKadaluarsa('')
+  }
+
+  // Bali / default center
+  const center: [number, number] = useMemo(() => [-8.4095, 115.1889], [])
+
+  return (
+    <div className="relative h-full w-full">
+      {/* ── Peta ── */}
+      <MapContainer center={center} zoom={13} className="h-full w-full" zoomControl>
+        <TileLayer
+          key={basemap}
+          url={BASEMAPS[basemap].url}
+          attribution={BASEMAPS[basemap].attribution}
+          maxZoom={19}
+          maxNativeZoom={18}
+        />
+        {/* Overlay label hybrid (nama tempat, jalan, batas wilayah) — hanya di atas satelit */}
+        {basemap === 'satellite' && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution=""
+            pane="overlayPane"
+          />
+        )}
+
+        {/* Plot tersimpan — hijau */}
+        {plots.map((plot) => {
+          if (!plot.geo_data?.coordinates?.[0]) return null
+          const positions = plot.geo_data.coordinates[0].map(
+            ([lng, lat]) => [lat, lng] as [number, number]
+          )
+          const isHovered = hoveredPlot?.id === plot.id
+          // matchedPlotIds null = tidak ada filter aktif → semua dianggap cocok.
+          const isMatched = !matchedPlotIds || matchedPlotIds.has(plot.id)
+          return (
+            <Polygon
+              key={plot.id}
+              positions={positions}
+              pathOptions={{
+                color: isHovered ? '#166534' : '#15803d',
+                fillColor: statusLahanToColor(plot.status_lahan),
+                fillOpacity: isMatched ? (isHovered ? 0.7 : 0.4) : 0.15,
+                opacity: isMatched ? 1 : 0.35,
+                weight: isHovered ? 3 : 1.5,
+              }}
+              eventHandlers={{
+                mouseover: (e) => {
+                  setHoveredPlot(plot)
+                  setTooltipPos({ x: e.containerPoint.x, y: e.containerPoint.y })
+                },
+                mousemove: (e) => {
+                  setTooltipPos({ x: e.containerPoint.x, y: e.containerPoint.y })
+                },
+                mouseout: () => {
+                  setHoveredPlot(null)
+                  setTooltipPos(null)
+                },
+                click: (e) => {
+                  // Stop bubble ke map: klik polygon TIDAK boleh ditimpa oleh
+                  // ClickOutsideResetter (map-level click) di bawah. Penting untuk
+                  // device yang tap-nya tidak memicu mouseover/mouseout beruntun
+                  // (lihat catatan di ClickOutsideResetter).
+                  L.DomEvent.stopPropagation(e)
+                  setHoveredPlot(plot)
+                  setTooltipPos({ x: e.containerPoint.x, y: e.containerPoint.y })
+                },
+              }}
+            />
+          )
+        })}
+
+        {/* Polygon yang baru digambar — biru, belum tersimpan */}
+        {pending && (
+          <Polygon
+            positions={pending.latlngs}
+            pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, dashArray: '6 4', weight: 2 }}
+          />
+        )}
+
+        <GeomanController isDrawing={isDrawing} onCreated={handleCreated} />
+        <ClickOutsideResetter onReset={() => { setHoveredPlot(null); setTooltipPos(null) }} />
+        <SearchPinLayer pin={searchPin} />
+        <FlyToCenter plots={plots} trigger={flyToggle} />
+        <FlyToPlot
+          target={flyToPlot}
+          plots={plots}
+          onArrive={(plot, pt) => { setHoveredPlot(plot); setTooltipPos(pt) }}
+        />
+        {desaBoundary && <DesaBoundaryRenderer data={desaBoundary} />}
+      </MapContainer>
+
+      {/* ── Penunjuk arah mata angin — ditaruh DI ATAS legenda Jenis Lahan
+          (bukan sejajar) supaya tidak tabrakan di pojok kiri-bawah yang sama ── */}
+      <CompassIndicator className="absolute bottom-24 left-4 z-[1000]" />
+
+      {/* ── Legenda warna Jenis Lahan — kawasan ini SATU mode saja (bukan toggle
+          seperti peta detail petak), warna polygon selalu ikut status_lahan ── */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 px-3 py-2">
+        <div className="text-[10px] font-semibold text-gray-500 mb-1.5">Warna polygon = Jenis Lahan</div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {(['organik', 'regenerative', 'konversi', 'konvensional'] as const).map((cat) => (
+            <div key={cat} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full" style={{ background: LAND_CATEGORY_COLORS[cat] }} />
+              <span className="text-[10px] text-gray-600">{LAND_CATEGORY_LABEL[cat]}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-1.5 border-l border-gray-200 pl-3">
+            <div className="w-3 h-3 rounded-full" style={{ background: LAND_CATEGORY_NULL_COLOR }} />
+            <span className="text-[10px] text-gray-600">Belum ditentukan</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Hover tooltip polygon petak ── */}
+      {hoveredPlot && tooltipPos && (
+        <PlotTooltip plot={hoveredPlot} pos={tooltipPos} />
+      )}
+
+      {/* ── Search box — kiri, di bawah tombol zoom Leaflet ── */}
+      <div className="absolute top-[80px] left-4 z-[1000] w-72">
+        <div className="relative flex items-center">
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Cari tempat atau −8.487, 115.211"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null) }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            className="w-full bg-white rounded-lg shadow-md border border-gray-200 pl-3 pr-16 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+          <div className="absolute right-1 flex items-center gap-0.5">
+            {searchPin && (
+              <button
+                onClick={clearSearch}
+                className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Hapus pin"
+              >
+                ✕
+              </button>
+            )}
+            <button
+              onClick={handleSearch}
+              disabled={isSearching || !searchQuery.trim()}
+              className="p-1.5 text-gray-500 hover:text-green-700 disabled:opacity-40 transition-colors"
+              title="Cari"
+            >
+              {isSearching ? (
+                <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-green-600 rounded-full animate-spin" />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+        {searchError && (
+          <p className="mt-1 text-xs text-red-600 bg-white px-2.5 py-1.5 rounded-lg shadow border border-red-100">
+            {searchError}
+          </p>
+        )}
+      </div>
+
+      {/* ── Kontrol pojok kanan atas: toggle basemap + tombol gambar ── */}
+      <div className="absolute top-4 right-4 z-[1000] flex items-center gap-2">
+        {/* Toggle Peta / Satelit */}
+
+        <div className="flex rounded-lg overflow-hidden shadow-md border border-gray-200 bg-white text-[11px] font-semibold">
+          {(['satellite', 'osm'] as Basemap[]).map((b) => (
+            <button
+              key={b}
+              onClick={() => setBasemap(b)}
+              className={`px-3 py-2 transition-colors ${
+                basemap === b
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {BASEMAPS[b].label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="absolute top-[80px] right-4 z-[1000] flex flex-col gap-2 items-end">
+        {!pending && (
+          <div className="flex items-center gap-2">
+            <KmlImportModal kawasanId={kawasanId} onImported={refreshPlotsFromServer} />
+            <button
+              onClick={() => setIsDrawing((v) => !v)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-colors ${
+                isDrawing
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-green-700 hover:bg-green-800 text-white'
+              }`}
+            >
+              {isDrawing ? '✕ Batal Gambar' : '+ Gambar Polygon Baru'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Hint saat drawing mode aktif ── */}
+      {isDrawing && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-4 py-2 rounded-full shadow-md pointer-events-none">
+          Klik titik-titik sudut lahan · Klik dua kali untuk selesai
+        </div>
+      )}
+
+      {/* ── Form setelah polygon selesai digambar ── */}
+      {pending && (
+        <div className="absolute inset-x-4 bottom-6 z-[1000] bg-white rounded-2xl shadow-xl border border-gray-100 max-h-[82%] overflow-y-auto">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-800">Data Petak Baru</h3>
+              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                {pending.areaHa} ha (otomatis)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Nama Penggarap */}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Nama Penggarap <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="contoh: Wayan Sujana"
+                  value={farmerName}
+                  onChange={(e) => setFarmerName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Nama Pemilik — opsional */}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Nama Pemilik Lahan
+                  <span className="ml-1 text-gray-400 font-normal">(opsional — kosongkan jika sama dengan penggarap)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="contoh: Nyoman Kariasa"
+                  value={namaPemilik}
+                  onChange={(e) => setNamaPemilik(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Status Lahan */}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Status Lahan
+                </label>
+                <select
+                  value={statusLahan}
+                  onChange={(e) => setStatusLahan(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Pilih status lahan...</option>
+                  <option value="organik">Organik</option>
+                  <option value="konversi">Konversi (masa transisi)</option>
+                  <option value="regenerative">Regenerative</option>
+                  <option value="konvensional">Konvensional</option>
+                </select>
+                <p className="text-[10px] text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg mt-1.5 leading-relaxed">
+                  Status ini berdasarkan pengakuan/dokumen petani, belum tervalidasi sistem — untuk klaim resmi tetap perlu sertifikasi LSO.
+                </p>
+              </div>
+
+              {/* Data sertifikasi — hanya tampil kalau status bukan konvensional */}
+              {statusLahan && statusLahan !== 'konvensional' && (
+                <>
+                  <div className="col-span-2">
+                    <p className="text-xs font-medium text-gray-400 pt-1">Detail sertifikasi (opsional)</p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1">Nama LSO / Badan Sertifikasi</label>
+                    <input
+                      type="text"
+                      placeholder="contoh: Lembaga Sertifikasi Organik Seloliman"
+                      value={namaLso}
+                      onChange={(e) => setNamaLso(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Nomor Sertifikat</label>
+                    <input
+                      type="text"
+                      placeholder="No. sertifikat"
+                      value={nomorSertifikat}
+                      onChange={(e) => setNomorSertifikat(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Tanggal Kadaluarsa</label>
+                    <input
+                      type="date"
+                      value={tanggalKadaluarsa}
+                      onChange={(e) => setTanggalKadaluarsa(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="col-span-2">
+                <p className="text-xs text-gray-400">
+                  Varietas dan tanggal tanam diisi setelah petak tersimpan, via menu <strong>Musim Tanam</strong> di dashboard plot.
+                </p>
+              </div>
+            </div>
+
+            {saveError && (
+              <p className="text-xs text-red-500 mt-3 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={handleSave}
+                disabled={!farmerName.trim() || saving}
+                className="flex-1 bg-green-700 hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm py-2.5 rounded-xl font-semibold transition-colors"
+              >
+                {saving ? 'Menyimpan…' : 'Simpan Petak'}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

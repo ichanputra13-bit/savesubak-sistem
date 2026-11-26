@@ -1,0 +1,9 @@
+{
+  "projectId": "79169b80-a2f3-4809-b35a-cbddb857fa1b",
+  "type": "frontend",
+  "name": "Farmers — Database page is accessible",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to /farmers" },
+    { "type": "assertion", "description": "The page displays a heading containing the text 'Database Pekaseh / Petani'" }
+  ]
+}

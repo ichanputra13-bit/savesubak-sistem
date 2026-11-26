@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinagri — Menjaga Sawah, Menghargai Petani</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1b2b1f;
+    --paper: #FBF8F2;
+    --green: #2f6b3a;
+    --green-deep: #14261a;
+    --gold: #c98a2c;
+    --gold-soft: #f3e3c6;
+    --muted: #6b6255;
+    --border: #e6ddc9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Inter', sans-serif; color: var(--ink);
+    background: var(--green-deep);
+  }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; overflow-y: auto;
+    background: var(--paper);
+  }
+  .slide.active { display: flex; }
+  .slide-inner { padding: 54px 90px 100px; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; color: var(--gold);
+    text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 14px;
+  }
+  .slide h1 {
+    font-family: 'Lora', serif; font-weight: 600; font-style: normal;
+    font-size: 34px; color: var(--green-deep); line-height: 1.3; margin-bottom: 22px;
+  }
+  .slide h2.sub { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--green); margin: 20px 0 10px; }
+  .slide p { font-size: 16px; line-height: 1.75; color: #3a3428; margin-bottom: 13px; }
+  .slide p.lead { font-size: 18.5px; color: var(--ink); font-family: 'Lora', serif; line-height: 1.7; }
+  .quote {
+    font-family: 'Lora', serif; font-style: italic; font-size: 22px; color: var(--green-deep);
+    border-left: 4px solid var(--gold); padding: 4px 0 4px 22px; margin: 18px 0; line-height: 1.55;
+  }
+  .fact-card {
+    background: white; border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; margin: 14px 0;
+  }
+  .fact-card .num { font-family: 'Lora', serif; font-size: 30px; font-weight: 700; color: var(--green); }
+  .fact-card .label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .fact-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0 6px; }
+  .source-note {
+    font-size: 12px; color: var(--muted); margin-top: 16px; padding-top: 12px;
+    border-top: 1px solid var(--border); line-height: 1.6;
+  }
+  .law-list { list-style: none; margin: 10px 0; }
+  .law-list li {
+    padding: 10px 0 10px 26px; position: relative; font-size: 15px; line-height: 1.6; color: #3a3428;
+    border-bottom: 1px solid var(--border);
+  }
+  .law-list li:last-child { border-bottom: none; }
+  .law-list li::before { content: '§'; position: absolute; left: 0; color: var(--gold); font-weight: 700; font-size: 16px; }
+  .law-list li strong { color: var(--green-deep); }
+
+  .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+  .split.reverse { grid-template-columns: 0.9fr 1.1fr; }
+  .split.reverse .split-photo { order: 2; }
+  .split-photo img {
+    width: 100%; height: 420px; object-fit: cover; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(20,38,26,0.18);
+  }
+  .split-photo img.screenshot-full {
+    width: 100%; height: auto; max-height: 500px;
+    object-fit: contain; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(20,38,26,0.18);
+    background: white; border: 1px solid var(--border);
+  }
+  .split.screenshot-row { align-items: flex-start; }
+  .split-photo .cap { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  .stacked-preview { display: flex; flex-direction: column; gap: 24px; }
+  .stacked-preview img.screenshot-full {
+    width: 100%; max-height: 480px; object-fit: contain;
+    border-radius: 14px; box-shadow: 0 12px 32px rgba(20,38,26,0.18);
+    background: white; border: 1px solid var(--border);
+  }
+  .stacked-preview .stacked-text { max-width: 900px; }
+
+  .callout-box {
+    background: var(--gold-soft); border-left: 4px solid var(--gold); border-radius: 10px;
+    padding: 16px 20px; margin: 16px 0; font-size: 14.5px; color: #4a3a17; line-height: 1.65;
+  }
+
+  /* COVER */
+  .slide.cover { padding: 0; }
+  .cover-bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+  }
+  .cover-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(15,26,18,0.55) 0%, rgba(15,26,18,0.75) 55%, rgba(10,18,12,0.94) 100%);
+  }
+  .cover-content {
+    position: relative; z-index: 2; margin: auto; text-align: center; color: white;
+    max-width: 760px; padding: 40px;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.92);
+    border-radius: 28px;
+    padding: 24px 40px;
+    margin-bottom: 30px;
+    box-shadow: 8px 8px 20px rgba(0,0,0,0.15), -4px -4px 16px rgba(255,255,255,0.5) inset;
+  }
+  .logo-badge img.logo { height: 130px; margin-bottom: 0; display: block; }
+  .cover-content h1 {
+    font-family: 'Lora', serif; font-weight: 600; color: white; font-size: 40px;
+    line-height: 1.35; margin-bottom: 0;
+  }
+  .cover-content .tagline { font-size: 15px; color: rgba(255,255,255,0.75); margin-top: 22px; letter-spacing: 0.3px; }
+
+  /* VIDEO SLIDE */
+  .slide.video-slide .slide-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding-top: 20px; }
+  .slide.video-slide h1 { text-align: center; }
+  .slide.video-slide video {
+    width: 100%; max-width: 980px; border-radius: 14px; box-shadow: 0 16px 40px rgba(20,38,26,0.25);
+    background: black;
+  }
+
+  /* CLOSING */
+  .slide.closing .cover-content h1 { font-size: 32px; }
+  .slide.closing .cover-content p { color: rgba(255,255,255,0.88); font-size: 16px; line-height: 1.75; margin-top: 18px; }
+  .slide.closing .cover-content .invite {
+    margin-top: 26px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 12px; padding: 18px 24px; font-size: 14.5px; color: rgba(255,255,255,0.92); line-height: 1.7;
+  }
+
+  .chrome {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+    background: rgba(20,38,26,0.96); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 28px; z-index: 50; color: white;
+  }
+  .chrome .progress-wrap { flex: 1; margin: 0 24px; }
+  .chrome .progress-track { height: 4px; background: rgba(255,255,255,0.18); border-radius: 4px; overflow: hidden; }
+  .chrome .progress-fill { height: 100%; background: var(--gold); transition: width .25s ease; }
+  .chrome .counter { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; letter-spacing: 0.5px; }
+  .chrome button {
+    background: var(--gold); color: #2b1e05; border: none; padding: 10px 20px;
+    border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .chrome button:disabled { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.4); cursor: not-allowed; }
+  .chrome .doc-tag { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #d8cca8; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck"></div>
+
+<div class="chrome">
+  <div class="doc-tag">SINAGRI · VISI</div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="counter" id="counter">Slide 1/1</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button id="prevBtn">← Sebelumnya</button>
+    <button id="nextBtn">Selanjutnya →</button>
+  </div>
+</div>
+
+<script>
+const SLIDES = [];
+
+// SLIDE 1 — COVER
+SLIDES.push({ variant: 'cover', html: `
+  <div class="cover-bg" style="background-image:url('Gambar/Presentasi/Foto 6.jpg');"></div>
+  <div class="cover-scrim"></div>
+  <div class="cover-content">
+    <div class="logo-badge"><img class="logo" src="../public/images/sinagri_logo_white.png" alt="Sinagri"></div>
+    <h1>Menjaga Sawah, Menghargai Petani,<br>Mewujudkan Bali Pulau Organik</h1>
+    <div class="tagline">Sinagri — sebuah ikhtiar kecil untuk warisan yang jauh lebih besar dari kita</div>
+  </div>
+`});
+
+// SLIDE 2 — VIDEO
+SLIDES.push({ variant: 'video', html: `
+  <div class="eyebrow">Mengenal Kami</div>
+  <h1>Sebelum lanjut, kenalan dulu dengan Save Subak</h1>
+  <video controls preload="metadata">
+    <source src="Gambar/Presentasi/Video/Save_Subak_Intro_Compressed.mp4" type="video/mp4">
+    Browser Anda tidak mendukung pemutaran video ini.
+  </video>
+`});
+
+// SLIDE 3 — MASALAH 1: data penyusutan
+SLIDES.push({ html: `
+  <div class="eyebrow">Masalah yang Kita Hadapi</div>
+  <h1>Sawah Bali sedang menghilang, dan kecepatannya bisa dihitung</h1>
+  <div class="split">
+    <div>
+      <p class="lead">Setiap hektare sawah yang berubah jadi bangunan bukan cuma kehilangan lahan — itu kehilangan air yang mengalir turun-temurun, kehilangan filosofi yang menjaga keseimbangan Bali, dan kehilangan satu lagi ruang hijau yang tidak akan pernah kembali seperti semula.</p>
+      <div class="fact-row">
+        <div class="fact-card"><div class="num">70.995,87</div><div class="label">hektare sawah Bali, tahun 2019</div></div>
+        <div class="fact-card"><div class="num">64.474</div><div class="label">hektare sawah Bali, tahun 2024</div></div>
+        <div class="fact-card"><div class="num">−6.521,81</div><div class="label">hektare hilang dalam 5 tahun (−9,19%)</div></div>
+      </div>
+      <p>Rata-rata, Bali kehilangan sekitar <strong>1,53% sawahnya setiap tahun</strong>. Angka ini terdengar kecil kalau dibaca sekilas — tapi kalau dibiarkan berjalan di kecepatan yang sama, sejumlah pengamat memperingatkan proyeksi yang cukup mengejutkan: <em>50 tahun lagi, Bali bisa saja tidak punya sawah tersisa.</em></p>
+      <p style="font-size:13.5px; color:var(--muted);">*Proyeksi "50 tahun lagi" ini adalah perkiraan dari pengamatan media/pemerhati berdasarkan tren penyusutan yang ada, bukan pernyataan resmi dari pemerintah — tapi tren angkanya sendiri nyata dan tercatat.</p>
+    </div>
+    <div class="split-photo">
+      <img src="Gambar/Presentasi/Canggu 10 tahun.jpg" alt="Perbandingan Canggu 2013 vs 2025">
+      <div class="cap">Canggu, dari citra satelit 2013 ke 2025 — hijau yang berubah jadi padat bangunan</div>
+    </div>
+  </div>
+  <div class="source-note">Sumber data: Badan Pertanahan Nasional Provinsi Bali, dikutip dari pemberitaan Juli 2026.</div>
+`});
+
+// SLIDE 4 — MASALAH 2: subak & penyebab
+SLIDES.push({ html: `
+  <div class="eyebrow">Masalah yang Kita Hadapi</div>
+  <h1>2.883 subak masih bertahan — tapi dengan dukungan yang sangat terbatas</h1>
+  <div class="split reverse">
+    <div class="split-photo">
+      <img src="Gambar/Presentasi/Foto 2.JPG" alt="Hamparan sawah Bali">
+      <div class="cap">Hamparan sawah yang masih tersisa — pemandangan yang perlahan menjadi langka</div>
+    </div>
+    <div>
+      <p class="lead">Di seluruh Bali, tersisa <strong>2.883 subak</strong> — organisasi pengairan tradisional yang sudah mengatur sawah-sawah Bali selama berabad-abad. Tapi dukungan resmi untuk menjaga mereka tetap hidup masih sangat kecil: masing-masing subak hanya mendapat bantuan sekitar <strong>Rp15 juta per tahun</strong> dari provinsi.</p>
+      <div class="callout-box">Rp15 juta setahun untuk mengelola sistem irigasi, upacara adat, dan operasional 1 subak secara keseluruhan — sementara harga tanah di sekitarnya terus melambung karena diincar untuk dibangun vila, hotel, dan resor.</div>
+      <p><strong>Penyebab utamanya sederhana: ledakan pariwisata.</strong> Ketika 1 hektare sawah menghasilkan pendapatan yang jauh lebih kecil dibanding 1 hektare yang disewakan untuk pariwisata, tekanan untuk menjual atau mengalihfungsikan lahan jadi sangat besar — terutama bagi petani yang sudah berjuang dengan margin keuntungan pertanian yang tipis.</p>
+    </div>
+  </div>
+  <div class="source-note">Sumber: Pergub Bali No. 61/2025 (besaran bantuan subak); pemberitaan Juli 2026 soal jumlah subak dan tren konversi lahan.</div>
+`});
+
+// SLIDE 5 — KENAPA PENTING 1: Tri Hita Karana & UNESCO
+SLIDES.push({ html: `
+  <div class="eyebrow">Kenapa Ini Penting Dijaga</div>
+  <h1>Subak bukan sekadar sistem irigasi — ini filosofi hidup orang Bali</h1>
+  <div class="split">
+    <div>
+      <p class="lead">Subak lahir dari <strong>Tri Hita Karana</strong> — filosofi keseimbangan antara manusia dengan Tuhan, manusia dengan sesama manusia, dan manusia dengan alam. Setiap petak sawah, setiap pura di tengah subak, setiap ritual sebelum tanam dan setelah panen adalah wujud nyata dari filosofi itu — bukan cuma soal menanam padi, tapi soal menjaga hubungan yang seimbang dengan alam dan sesama.</p>
+      <div class="quote">"Sawah bukan hanya tempat menanam padi — ia adalah ruang di mana manusia, alam, dan Yang Maha Esa bertemu."</div>
+      <p>Karena nilai inilah, sistem Subak Bali secara resmi diakui UNESCO sebagai <strong>Warisan Budaya Dunia</strong> pada tahun 2012 — pengakuan bahwa apa yang dijaga petani Bali selama berabad-abad ini bernilai bagi seluruh dunia, bukan cuma bagi Bali sendiri.</p>
+    </div>
+    <div class="split-photo">
+      <img src="Gambar/Presentasi/Foto 1.jpg" alt="Pura di tengah subak">
+      <div class="cap">Pura di tengah genangan subak — tempat manusia, alam, dan Yang Maha Esa bertemu</div>
+    </div>
+  </div>
+`});
+
+// SLIDE 6 — KENAPA PENTING 2: ironi pariwisata & ketahanan pangan
+SLIDES.push({ html: `
+  <div class="eyebrow">Kenapa Ini Penting Dijaga</div>
+  <h1>Ironinya, sawah itu sendiri yang membuat orang jatuh cinta pada Bali</h1>
+  <div class="split reverse">
+    <div class="split-photo">
+      <img src="Gambar/Presentasi/Foto 4.jpeg" alt="Pemangku di depan pura">
+      <div class="cap">Warisan budaya yang masih dijalankan setiap hari, bukan sekadar tontonan wisata</div>
+    </div>
+    <div>
+      <p class="lead">Ada ironi yang menyakitkan di sini: <strong>pariwisata yang menggerus sawah Bali justru sebagian besar tumbuh karena keindahan sawah dan budaya subak itu sendiri.</strong> Terasering hijau yang membentang, upacara di pura tengah sawah, suasana desa yang masih terasa "Bali asli" — semua itu adalah daya tarik yang mendatangkan wisatawan dari seluruh dunia.</p>
+      <p>Kalau sawah terus berubah jadi vila dan hotel, cepat atau lambat yang hilang bukan cuma lahan pertanian — tapi juga alasan orang datang ke Bali sejak awal.</p>
+      <p>Di luar soal budaya dan pariwisata, ada risiko yang lebih mendasar: <strong>ketahanan pangan lokal.</strong> Semakin sedikit sawah yang tersisa, semakin bergantung Bali pada beras dan bahan pangan dari luar pulau — sesuatu yang mempengaruhi setiap orang yang tinggal di Bali, bukan cuma petani.</p>
+    </div>
+  </div>
+`});
+
+// SLIDE 7 — KOMITMEN NEGARA
+SLIDES.push({ html: `
+  <div class="eyebrow">Komitmen yang Sudah Ada</div>
+  <h1>Niat baik pemerintah sudah tertulis jelas — tinggal bagaimana membuktikannya</h1>
+  <div class="split">
+    <div>
+      <p class="lead">Bali sebenarnya sudah punya visi besar: <strong>"Nangun Sat Kerthi Loka Bali"</strong> — menuju Bali sebagai Pulau Organik. Visi ini didukung sejumlah aturan resmi:</p>
+      <ul class="law-list">
+        <li><strong>Perda Bali No. 8/2019</strong> — Sistem Pertanian Organik Bali</li>
+        <li><strong>Pergub Bali No. 15/2021</strong> — aturan pelaksanaan sistem pertanian organik</li>
+        <li><strong>Pergub Bali No. 99/2018</strong> — kewajiban pemasaran produk lokal Bali, termasuk oleh hotel &amp; restoran</li>
+        <li><strong>Instruksi Gubernur Bali No. 5/2025</strong> — larangan alih fungsi lahan pertanian</li>
+      </ul>
+    </div>
+    <div>
+      <div class="split-photo" style="margin-bottom:6px;">
+        <img src="Gambar/Presentasi/Foto 3.JPG" alt="Sawah dengan latar gunung">
+        <div class="cap">Ini yang ingin dijaga oleh semua aturan tersebut</div>
+      </div>
+      <div class="callout-box">
+        <strong>Tapi ada satu celah besar:</strong> niat kebijakan sudah ada, tapi buktinya di lapangan sering kali belum. Siapa yang benar-benar menjaga lahannya dengan ramah lingkungan? Siapa yang sungguh-sungguh menjalankan praktik organik, bukan cuma mengaku? Selama ini, jawabannya sering bergantung pada klaim sepihak — belum ada cara obyektif untuk membuktikannya.
+      </div>
+    </div>
+  </div>
+`});
+
+// SLIDE 8 — DI SINILAH SINAGRI MASUK
+SLIDES.push({ html: `
+  <div class="eyebrow">Di Sinilah Sinagri Masuk</div>
+  <h1>Bukan cuma alat hitung karbon — alat pembuktian dan apresiasi</h1>
+  <div class="split reverse">
+    <div class="split-photo">
+      <img src="Gambar/Presentasi/Foto 5.jpg" alt="Petani memeriksa tanaman">
+      <div class="cap">Petani yang sungguh-sungguh menjaga lahannya, layak mendapat pengakuan yang nyata</div>
+    </div>
+    <div>
+      <p class="lead">Sinagri dibangun untuk mengisi celah itu. Ini bukan sekadar aplikasi penghitung emisi karbon — ini adalah cara untuk <strong>membuktikan dan menghargai</strong> apa yang selama ini sering tidak terlihat: kerja keras petani yang menjaga lahannya dengan cara yang ramah lingkungan.</p>
+      <p>Caranya: memetakan setiap petak lahan secara presisi, lalu merekam praktik pertanian yang ramah lingkungan secara <strong>obyektif</strong> — berdasarkan data satelit yang bisa diverifikasi siapa pun, bukan berdasarkan klaim sepihak dari petani atau siapa pun.</p>
+      <div class="quote">Tujuannya sederhana: petani yang benar-benar menjaga lahannya dengan baik, mendapat pengakuan yang nyata — bukan cuma pujian, tapi bukti yang bisa dipercaya.</div>
+    </div>
+  </div>
+`});
+
+// SLIDE 9 — BAGAIMANA CARANYA
+SLIDES.push({ html: `
+  <div class="eyebrow">Bagaimana Caranya</div>
+  <h1>Sederhana bagi petani, kuat secara data</h1>
+  <p class="lead" style="max-width:820px;">Petani tidak perlu melakukan apa-apa yang merepotkan. Satelit yang mengorbit di luar angkasa memantau lahan dari atas, mencatat kondisinya dari waktu ke waktu — tanpa mengganggu aktivitas bertani sehari-hari sama sekali.</p>
+  <div class="fact-row" style="grid-template-columns: repeat(3, 1fr); margin-top:24px;">
+    <div class="fact-card">
+      <div class="label" style="font-size:14px; color:var(--green-deep); font-weight:600; margin-bottom:6px;">Memantau dari langit</div>
+      <div class="label">Satelit memotret lahan secara berkala, tanpa perlu petani melapor manual atau dikunjungi terus-menerus</div>
+    </div>
+    <div class="fact-card">
+      <div class="label" style="font-size:14px; color:var(--green-deep); font-weight:600; margin-bottom:6px;">Mendukung sertifikasi organik</div>
+      <div class="label">Data ini menjadi bukti pendukung saat petani mengajukan sertifikasi organik ke Lembaga Sertifikasi Organik (LSO)</div>
+    </div>
+    <div class="fact-card">
+      <div class="label" style="font-size:14px; color:var(--green-deep); font-weight:600; margin-bottom:6px;">Membuka jalan traceability</div>
+      <div class="label">Hotel dan restoran bisa menelusuri asal produk yang mereka beli — mendukung kewajiban Pergub No. 99/2018 dan visi Bali Pulau Organik</div>
+    </div>
+  </div>
+`});
+
+// SLIDE 10 — PREVIEW PRODUK: halaman home
+SLIDES.push({ html: `
+  <div class="stacked-preview">
+    <img class="screenshot-full" src="Gambar/Presentasi/halaman home sinagri.png" alt="Halaman utama Sinagri">
+    <div class="stacked-text">
+      <div class="eyebrow">Sekilas Tampilan Sinagri</div>
+      <h1>Ini platform yang kami bangun</h1>
+      <p class="lead">Semua cerita dan data yang kamu baca sejauh ini bukan sekadar wacana — ada platform sungguhan di baliknya. Sinagri dirancang supaya siapa pun bisa memahami kondisi lahan hanya dengan sekali lihat, tanpa perlu latar belakang teknis atau ilmu satelit sama sekali.</p>
+      <p>Halaman ini adalah pintu masuknya — tempat siapa saja, dari petani sampai auditor, mulai memahami apa yang sedang dijaga dan dibuktikan.</p>
+    </div>
+  </div>
+`});
+
+// SLIDE 11 — PREVIEW PRODUK: dashboard made sengger
+SLIDES.push({ html: `
+  <div class="stacked-preview">
+    <img class="screenshot-full" src="Gambar/Presentasi/dashboard made sengger.png" alt="Peta lahan dengan batas polygon presisi">
+    <div class="stacked-text">
+      <div class="eyebrow">Sekilas Tampilan Sinagri</div>
+      <h1>Setiap petak, dipetakan presisi</h1>
+      <p class="lead">Setiap petak sawah dipetakan langsung dari citra satelit — bukan gambar kira-kira, bukan estimasi di atas kertas. Ini adalah batas asli lahan yang bisa diverifikasi ulang oleh siapa saja, kapan saja.</p>
+      <p>Petani tetap bertani seperti biasa. Yang berubah, kini ada rekaman yang jujur dan bisa dipercaya tentang lahan yang mereka jaga.</p>
+    </div>
+  </div>
+`});
+
+// SLIDE 12 — PREVIEW PRODUK: Polygon tracking
+SLIDES.push({ html: `
+  <div class="stacked-preview">
+    <img class="screenshot-full" src="Gambar/Presentasi/Polygon baru.png" alt="Bukti nyata, bukan sekadar klaim">
+    <div class="stacked-text">
+      <div class="eyebrow">Sekilas Tampilan Sinagri</div>
+      <h1>Bukti nyata, bukan klaim sepihak</h1>
+      <p class="lead">Ini yang membedakan Sinagri: data yang tercatat di sini bisa dicek independen oleh siapa saja. Bukan klaim sepihak dari petani, dan bukan klaim sepihak dari Sinagri sendiri.</p>
+      <p>Ketika sebuah lahan dikatakan dijaga dengan baik, itu bukan karena ada yang bilang begitu — tapi karena ada jejak data yang bisa ditelusuri ulang, oleh siapa pun yang ingin memastikannya.</p>
+    </div>
+  </div>
+`});
+
+// SLIDE 13 — PREVIEW PRODUK: chart petani
+SLIDES.push({ html: `
+  <div class="eyebrow">Sekilas Tampilan Sinagri</div>
+  <h1>Di balik layar, satelit bekerja tiap hari</h1>
+  <div class="split reverse screenshot-row">
+    <div class="split-photo">
+      <img class="screenshot-full" src="Gambar/Presentasi/chart petani.png" alt="Grafik pemantauan satelit dan analisis otomatis">
+    </div>
+    <div>
+      <p class="lead">Setiap beberapa hari, satelit merekam kondisi tanaman dan air di lahan — diam-diam, tanpa mengganggu siapa pun. Semua rekaman itu lalu diterjemahkan sistem jadi bahasa yang mudah dipahami siapa saja, bukan angka mentah yang membingungkan.</p>
+      <p>Jadi yang dilihat petani dan auditor bukan grafik rumit yang harus ditafsirkan sendiri — tapi kesimpulan yang sudah jelas: kondisi lahannya bagaimana, dan apa artinya.</p>
+    </div>
+  </div>
+`});
+
+// SLIDE 14 — PREVIEW PRODUK: Sumber data verifikasi
+SLIDES.push({ html: `
+  <div class="eyebrow">Sekilas Tampilan Sinagri</div>
+  <h1>Transparan sampai ke sumbernya</h1>
+  <div class="split screenshot-row">
+    <div>
+      <p class="lead">Semua data yang dipakai Sinagri bersumber dari satelit publik milik Badan Antariksa Eropa (ESA) — bukan data tertutup milik Sinagri sendiri yang harus dipercaya begitu saja.</p>
+      <p>Siapa pun yang meragukan, bisa mengecek ulang sumbernya secara independen. Ini yang membuat data Sinagri layak dipercaya bukan karena kami yang bilang, tapi karena semua orang bisa membuktikannya sendiri.</p>
+    </div>
+    <div class="split-photo">
+      <img class="screenshot-full" src="Gambar/Presentasi/Sumber data verifikasi.png" alt="Sumber data dan verifikasi independen ke Copernicus/ESA">
+    </div>
+  </div>
+`});
+
+// SLIDE 15 — PENUTUP / VISI
+SLIDES.push({ variant: 'closing', html: `
+  <div class="cover-bg" style="background-image:url('Gambar/Presentasi/Foto 6.jpg');"></div>
+  <div class="cover-scrim"></div>
+  <div class="cover-content">
+    <div class="eyebrow" style="color:var(--gold);">Visi Jangka Panjang</div>
+    <h1>Satu peta, seluruh sawah Bali, terjaga dan terhargai</h1>
+    <p>Cita-cita kami adalah sederhana untuk dibayangkan, tapi besar untuk diwujudkan: sebuah peta lengkap yang mencatat SEMUA lahan sawah Bali di Sinagri — setiap petak dipetakan, setiap praktik baik direkam, setiap petani yang menjaga lahannya mendapat pengakuan yang layak. Bukan cuma untuk beberapa subak percontohan, tapi untuk seluruh Bali.</p>
+    <div class="invite">Perjalanan ini tidak bisa dilakukan sendirian. Kami mengundang mitra teknis, lembaga verifikasi, dan siapa pun yang peduli pada masa depan sawah Bali untuk berkolaborasi bersama kami — menjaga sawah, menghargai petani, dan mewujudkan Bali Pulau Organik, bersama-sama.</div>
+  </div>
+`});
+
+// ---------- Deck engine ----------
+let current = 0;
+const deck = document.getElementById('deck');
+const counter = document.getElementById('counter');
+const progressFill = document.getElementById('progressFill');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function render() {
+  deck.innerHTML = '';
+  SLIDES.forEach((s, i) => {
+    const el = document.createElement('div');
+    let cls = 'slide' + (i === current ? ' active' : '');
+    if (s.variant === 'cover') cls += ' cover';
+    if (s.variant === 'closing') cls += ' cover closing';
+    if (s.variant === 'video') cls += ' video-slide';
+    el.className = cls;
+    if (s.variant === 'cover' || s.variant === 'closing') {
+      el.innerHTML = s.html;
+    } else {
+      el.innerHTML = `<div class="slide-inner">${s.html}</div>`;
+    }
+    deck.appendChild(el);
+  });
+  counter.textContent = `Slide ${current + 1}/${SLIDES.length}`;
+  progressFill.style.width = ((current + 1) / SLIDES.length * 100) + '%';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === SLIDES.length - 1;
+}
+
+function go(delta) {
+  const next = current + delta;
+  if (next < 0 || next >= SLIDES.length) return;
+  current = next;
+  render();
+}
+
+prevBtn.addEventListener('click', () => go(-1));
+nextBtn.addEventListener('click', () => go(1));
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'VIDEO') return;
+  if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+
+render();
+</script>
+</body>
+</html>

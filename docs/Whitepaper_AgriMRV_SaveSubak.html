@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>Whitepaper Sinagri: Satellite Intelligence for Agricultural Resilience & Integrity</title>
+    <style>
+        /* BASE STYLES */
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            line-height: 1.5; 
+            color: #222; 
+            margin: 0 auto; 
+            max-width: 800px; 
+            padding: 20px; 
+            font-size: 14px;
+        }
+        
+        h1 { color: #2c3e50; font-size: 2.2em; margin-bottom: 5px; }
+        h2 { color: #27ae60; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px; }
+        h3 { color: #2980b9; margin-bottom: 10px; }
+        p, li { margin-bottom: 10px; text-align: justify; }
+        ul, ol { margin-top: 0; padding-left: 20px; }
+        
+        pre { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.9em; page-break-inside: avoid; }
+        img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; page-break-inside: avoid; object-fit: contain;}
+        
+        .footer { font-style: italic; color: #7f8c8d; border-top: 1px solid #eee; margin-top: 30px; padding-top: 10px; font-size: 0.85em; display: flex; justify-content: space-between; page-break-inside: avoid;}
+        
+        /* COVER PAGE STYLES */
+        .cover { 
+            text-align: center; 
+            page-break-after: always;
+            height: auto;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .cover-content { width: 100%; max-width: 600px; margin: 0 auto; }
+        .confidential { color: #e74c3c; font-weight: bold; letter-spacing: 2px; margin-bottom: 40px; }
+        .cover img { box-shadow: none; border-radius: 0; margin-bottom: 30px; max-height: 120px;}
+        .cover h1 { margin-bottom: 0; }
+        .cover h3 { color: #7f8c8d; font-weight: normal; margin-top: 5px; margin-bottom: 50px; }
+        
+        .cover-box {
+            text-align: justify; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-left: 4px solid #27ae60; 
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .cover-author { text-align: right; font-size: 1.1em; width: 100%; max-width: 600px; margin: 0 auto; margin-top: 80px;}
+        
+        .page-break { page-break-after: always; }
+        
+        /* Tombol Cetak */
+        .btn-print { 
+            display: block; width: 250px; margin: 0 auto 30px auto; padding: 12px; 
+            background: #e74c3c; color: white; text-align: center; cursor: pointer; 
+            border-radius: 5px; font-weight: bold; font-size: 16px; border: none; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        
+        /* PRINT SPECIFIC STYLES */
+        @media print { 
+            @page { size: A4 portrait; margin: 15mm; }
+            body { max-width: 100%; margin: 0; padding: 0; font-size: 11pt; background: white;}
+            .btn-print { display: none; } 
+            .cover { height: 230mm; justify-content: space-between; padding: 0; margin-top: 20mm; }
+            .cover-author { margin-top: auto; }
+            img { max-height: 250px !important; }
+            h2 { margin-top: 15px; page-break-after: avoid; }
+            h3 { margin-top: 10px; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-print" onclick="window.print()">🖨️ Simpan sebagai PDF</button>
+
+    <div class="cover">
+        <div class="cover-content">
+            <div class="confidential">CONFIDENTIAL / RAHASIA</div>
+            <img src="../logo_save_subak.png" alt="Logo Save Subak" onerror="this.src='https://via.placeholder.com/220?text=Logo+Save+Subak'">
+            <h1>Sinagri: Satellite Intelligence for Agricultural Resilience & Integrity</h1>
+            <h3>Remote Sensing & Algoritma Verifikasi Karbon</h3>
+            
+            <div class="cover-box">
+                <strong>Maksud & Tujuan:</strong><br>
+                Dokumen ini disusun sebagai panduan teknis dan landasan ilmiah (<em>Scientific Blueprint</em>) bagi auditor dan pemangku kepentingan untuk memvalidasi algoritma pemantauan satelit pada sistem AgriMRV.
+            </div>
+        </div>
+        
+        <div class="cover-author">
+            <p style="margin: 2px 0;"><b>Disusun Oleh:</b> Ichan Putra</p>
+            <p style="margin: 2px 0;"><b>Tanggal:</b> 16 Juli 2026</p>
+        </div>
+    </div>
+
+    <!-- ISI DOKUMEN -->
+    <h2>1. Pendahuluan</h2>
+    <p>Platform <strong>AgriMRV by Save Subak</strong> memanfaatkan teknologi penginderaan jauh (<em>remote sensing</em>) terkini untuk melakukan <em>Measurement, Reporting, and Verification</em> (MRV) pada lahan pertanian sawah. Dokumen ini merangkum metodologi ilmiah yang kami gunakan, memastikan transparansi penuh bagi auditor karbon maupun pemangku kepentingan kelestarian lingkungan.</p>
+
+    <h2>2. Spesifikasi Satelit Pemantau</h2>
+    <p>Untuk memastikan keandalan data dalam segala kondisi cuaca, AgriMRV menggunakan pendekatan <em>multi-sensor</em> dari konstelasi satelit <strong>Copernicus</strong> milik <strong>European Space Agency (ESA)</strong>.</p>
+    
+    <h3>A. Sentinel-2 (Satelit Optik Multispektral)</h3>
+    <ul>
+        <li><strong>Fungsi:</strong> Bertindak sebagai "Kamera Raksasa" yang menangkap pantulan cahaya matahari (kasat mata maupun inframerah) dari permukaan bumi.</li>
+        <li><strong>Keunggulan:</strong> Resolusi spasial hingga 10 meter, sangat tajam untuk memetakan petak-petak sawah.</li>
+        <li><strong>Interval Pengambilan:</strong> Melewati lokasi yang sama setiap <strong>5 hari sekali</strong>, memberikan data <em>time-series</em> yang sangat padat secara gratis.</li>
+    </ul>
+
+    <h3>B. Sentinel-1 (Satelit Radar / SAR)</h3>
+    <ul>
+        <li><strong>Fungsi:</strong> Menggunakan teknologi <em>Synthetic Aperture Radar</em> (SAR) yang memancarkan gelombang mikro secara mandiri ke bumi dan menangkap gemanya.</li>
+        <li><strong>Keunggulan Utama:</strong> Mampu <strong>menembus awan tebal dan hujan</strong>, serta beroperasi di malam hari. Digunakan untuk mengukur struktur fisik tanaman dan kelembapan tanah permukaan (VV & VH).</li>
+    </ul>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Dibuat oleh: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>3. Anatomi Algoritma Satelit: Tujuan, Korelasi Karbon & Analogi</h2>
+    <p>Bagian ini membedah kelima parameter satelit yang digunakan oleh sistem AgriMRV. Setiap parameter tidak hanya diukur secara matematis, namun memiliki korelasi langsung dengan praktik pertanian organik dan kalkulasi emisi karbon.</p>
+
+    <h3>3.1. NDVI (Normalized Difference Vegetation Index)</h3>
+    <p><strong>Rumus Satelit:</strong> <code>(NIR - Red) / (NIR + Red)</code></p>
+    <ul>
+        <li><strong>Tujuan Utama:</strong> Mengukur tingkat kesehatan, kerapatan kanopi, dan laju pertumbuhan biomassa padi.</li>
+        <li><strong>Korelasi Pertanian Organik:</strong> Menjadi bukti empiris bahwa pupuk kompos/organik (tanpa pupuk kimia sintesis) berhasil memberikan nutrisi optimal. Kurva NDVI yang terus menanjak membuktikan tanah organik mampu menopang pertumbuhan tanaman dengan sempurna.</li>
+        <li><strong>Korelasi Kredit Karbon:</strong> Semakin tinggi biomassa (daun lebat hijau), semakin besar proses fotosintesis. Fotosintesis secara harfiah menyedot CO2 dari atmosfer dan menyimpannya di dalam jaringan tubuh tanaman (<em>Carbon Sequestration</em>). <strong>NDVI tinggi = Serapan Karbon Tinggi.</strong></li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Burger Merah dan Batu Panas"</strong><br>
+        Matahari melempar cahaya Merah (Red) dan Inframerah (NIR/Batu Panas). Daun padi sehat melahap habis si Merah sebagai makanan, dan menendang jauh-jauh Batu Panas karena berbahaya. Satelit menghitung: <code>(Tinggi - Nol) / (Tinggi + Nol)</code>. Hasilnya <strong>Positif Tinggi (+1)</strong>. Sebaliknya, tanah kosong tidak bisa makan cahaya merah, sehingga nilainya menjadi <strong>Negatif</strong>.
+    </div>
+
+    <h3>3.2. NDWI (Deteksi Genangan Optik)</h3>
+    <p><strong>Rumus Satelit (McFeeters):</strong> <code>(Green - NIR) / (Green + NIR)</code></p>
+    <ul>
+        <li><strong>Tujuan Utama:</strong> Membedakan area genangan air dengan kondisi lahan kering di sawah secara presisi tinggi, khusus di saat langit sedang cerah.</li>
+        <li><strong>Korelasi Pertanian Organik:</strong> Memastikan kepatuhan jadwal irigasi dari tata kelola <em>Subak</em> tradisional.</li>
+        <li><strong>Korelasi Kredit Karbon:</strong> Kunci emisi sawah ada pada genangan air. Sawah yang terus-menerus tergenang akan menghasilkan bakteri anaerobik (tanpa oksigen) yang melepaskan Gas Metana (CH4).</li>
+        <li><strong>Dukungan Deteksi AWD (Bila Cuaca Cerah):</strong> Jika langit cerah, NDWI membantu radar memverifikasi praktik pengeringan lahan (AWD) lewat grafik yang ber-zig-zag (positif ke negatif). Namun, karena di Indonesia musim tanam berbarengan dengan awan hujan pekat, tugas utama verifikasi AWD diserahkan pada satelit Radar VV.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Spons Raksasa Penelan Batu"</strong><br>
+        Air adalah musuh inframerah (NIR). Saat inframerah jatuh ke air, air menelannya tanpa sisa (Pantulan 0). Namun cahaya Hijau (Green) tetap memantul sedikit. Satelit menghitung <code>(Hijau - Nol) / (Hijau + Nol)</code> = <strong>Positif Terang</strong>. Namun, saat lahan dikeringkan untuk protokol AWD, tanah menendang inframerah kembali ke angkasa, mengubah hitungan menjadi <strong>Negatif Gelap</strong>. Kedipan "Terang-Gelap" di satelit inilah bukti valid keberhasilan AWD.
+    </div>
+
+    <h3>3.3. NBR (Normalized Burn Ratio)</h3>
+    <p><strong>Rumus Satelit:</strong> <code>(NIR - SWIR) / (NIR + SWIR)</code></p>
+    <ul>
+        <li><strong>Tujuan Utama:</strong> Bertindak sebagai "Detektor Kebohongan" pasca-panen untuk memastikan tidak ada jerami padi yang dibakar.</li>
+        <li><strong>Korelasi Pertanian Organik:</strong> Sisa jerami panen <em>wajib</em> dibiarkan membusuk atau dibajak kembali ke tanah sebagai kompos alami penyubur hara. Pembakaran akan menghancurkan siklus nutrisi organik ini.</li>
+        <li><strong>Korelasi Kredit Karbon:</strong> Membakar jerami langsung melepaskan <em>Black Carbon</em> (karbon hitam) dan CO2 pekat ke udara (Emisi Masif). Sistem menggaransi status <strong>Zero Burn</strong> (Nol Pembakaran) sebagai syarat mutlak penerbitan kredit karbon. Pelanggaran berarti pembatalan kredit.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Sinar Oven Pencari Abu"</strong><br>
+        Sinar Oven (SWIR) sangat sensitif pada air tapi terserap oleh benda basah. Lahan panen yang normal masih menyimpan kelembapan alami, sehingga menyerap habis Sinar Oven (Nilai <strong>Positif</strong>). Jika lahan dibakar, arang dan abu yang kerontang (0% air) memantulkan Sinar Oven hingga menyilaukan satelit, menjadikan nilai anjlok ke <strong>Negatif Tajam</strong>.
+    </div>
+
+    <h3>3.4. Radar VV (Sensor Utama Verifikasi AWD Tembus Awan)</h3>
+    <p><strong>Rumus Satelit:</strong> <code>Gelombang Mikro Aktif (Transmisi Vertikal, Penerimaan Vertikal)</code></p>
+    <ul>
+        <li><strong>Tujuan Utama:</strong> Menjadi tulang punggung (backbone) pendeteksi kekasaran tanah dan <strong>sensor utama verifikasi praktik AWD</strong> karena tidak bisa dihalangi oleh badai awan monsun sekalipun.</li>
+        <li><strong>Korelasi Pertanian Organik:</strong> Memastikan tanah benar-benar dibajak sempurna agar pupuk kompos organik tercampur rata ke dalam lumpur.</li>
+        <li><strong>Pembacaan Protokol AWD (Kuantifikasi Hari Aerasi):</strong> Inilah senjata utama kita untuk memenuhi standar ketat Verra VM0051. Saat sawah digenangi air, sinyal Radar VV terpantul menjauh (Nilai VV anjlok). Namun, saat petani membuang air untuk pengeringan berkala (AWD), permukaan tanah yang kasar kembali terekspos sehingga Radar memantul keras (Nilai VV meroket tajam).<br>
+        Sistem tidak hanya melihat grafiknya, tetapi <strong>secara otomatis menghitung durasi selisih hari</strong> antara grafik naik (mulai kering) dan grafik turun (mulai basah). Angka kuantitatif ini disebut sebagai <strong>"Total Hari Aerasi / Kering"</strong>. Tanpa angka valid dari Radar VV ini, kita tidak bisa mencetak kredit karbon AWD di daerah tropis!</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Lemparan Bola Tenis Lurus"</strong><br>
+        Radar bertindak seperti kelelawar. Satelit melempar "bola tenis" lurus tegak ke bumi. Jika lahan sedang <strong>digenangi air</strong> (licin seperti cermin), bola terpantul menjauh (Gema Hilang = VV Anjlok). Namun saat lahan sengaja <strong>dikeringkan untuk AWD</strong>, bola menabrak tanah kasar dan memantul lurus kembali ke atas (Gema Keras = <strong>VV Meroket</strong>). Grafik yang tiba-tiba meroket naik menceritakan kedisiplinan AWD petani tanpa satelit harus melihatnya secara visual.
+    </div>
+
+    <h3>3.5. Radar VH (Kepadatan Kanopi Tembus Awan)</h3>
+    <p><strong>Rumus Satelit:</strong> <code>Gelombang Mikro Aktif (Transmisi Vertikal, Penerimaan Horizontal)</code></p>
+    <ul>
+        <li><strong>Tujuan Utama:</strong> Memindai volume struktur fisik kanopi tanaman dalam 3 Dimensi, benar-benar tak peduli jika cuaca sedang gelap atau badai berawan lebat.</li>
+        <li><strong>Korelasi Pertanian Organik:</strong> Mengukur kepadatan batang dan kerimbunan tajuk daun padi. Ini membuktikan secara mekanis bahwa tanaman (walau tanpa bahan kimia sintesis) tumbuh memiliki postur yang sangat kokoh dan bervolume besar.</li>
+        <li><strong>Korelasi Kredit Karbon:</strong> Saat siklus curah hujan tinggi (musim hujan), satelit optik (NDVI) menjadi "buta" karena awan. VH mengambil alih tugas pembuktian biomassa. Ini memvalidasi bahwa penyerapan CO2 oleh tanaman tidak pernah terhenti sedetik pun, sehingga perhitungan karbon tetap utuh dan diakui auditor global.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Lemparan Bola Tenis Putar"</strong><br>
+        Satelit melempar bola lurus, tapi bola menabrak "hutan" batang padi yang rimbun. Bola terjebak dan memantul-mantul rumit di dalam kanopi, lalu memantul balik ke angkasa dengan putaran menyamping (Horizontal). Semakin rimbun padi, semakin banyak "bola putar" yang kembali menabrak satelit (<strong>VH Tinggi</strong>).
+    </div>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Dibuat oleh: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>5. Bukti Akurasi Sistem: Studi Kasus Fase Tanam</h2>
+    <p>Untuk membuktikan bahwa rumus yang digunakan bekerja sempurna di lapangan, perhatikan grafik fluktuasi NDVI dan NDWI di area persawahan berikut:</p>
+
+    <div style="text-align: center;">
+        <img src="../Chart_NDWI_NDVI.png" alt="Grafik NDVI NDWI" onerror="this.src='https://via.placeholder.com/800x400?text=Gambar+Grafik+Tidak+Ditemukan'">
+    </div>
+
+    <p><strong>Analisis Validasi (Mengapa Garis Bergerak Seperti Cermin?):</strong><br>
+    Grafik yang saling berkebalikan secara persis (simetris) antara NDVI (Hijau) dan NDWI (Biru) adalah <strong>bukti absolut</strong> akurasi sistem untuk lahan sawah padi:</p>
+    <ol>
+        <li><strong>Fase Genangan (Awal Grafik - 26 Mei):</strong> Sawah dibajak dan dipenuhi air. Air menelan gelombang NIR, menyebabkan <strong>NDWI meroket tinggi</strong>. Karena belum ada daun, <strong>NDVI anjlok</strong>.</li>
+        <li><strong>Fase Vegetatif Rimbun (Tengah Grafik - 25 Jun):</strong> Padi tumbuh lebat menutupi air. Daun memantulkan NIR secara masif. Akibatnya, <strong>NDVI meroket tajam</strong> ke atas. Karena air tertutup kanopi, <strong>NDWI anjlok</strong> menjadi negatif.</li>
+    </ol>
+    <p>Pola "cermin bersilangan" ini merupakan sidik jari unik dari siklus tanam padi yang sehat.</p>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Dibuat oleh: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>6. Metodologi Kalkulasi Kredit Karbon (Standar Global)</h2>
+    <p>Setelah satelit (Optik & Radar) memverifikasi bahwa petani benar-benar menjalankan praktik organik dan AWD, sistem AgriMRV akan menghitung jumlah emisi gas rumah kaca yang berhasil dicegah. Kami merujuk pada metodologi standar global seperti <strong>UNFCCC CDM AMS-III.AU</strong> (Methane emission reduction by adjusted water management practice in rice cultivation).</p>
+
+    <div style="background:#fff3cd; padding:15px; border-left:4px solid #f39c12; border-radius:4px; margin-bottom: 20px;">
+        <strong>Rumus Utama Pengurangan Emisi (Emission Reduction / ER):</strong><br>
+        <code style="font-size: 1.2em; color: #d35400;">ER = BE - PE - LE</code>
+    </div>
+
+    <ul>
+        <li><strong>BE (Baseline Emissions - Historis 3 Tahun / 36 Bulan):</strong> Emisi jika petani <em>tidak</em> bergabung dengan program (sawah digenangi terus-menerus). Syarat mutlak Verra VM0051 mewajibkan pembuktian kebiasaan petani sebelum proyek. Saat lahan baru didaftarkan, sistem akan menarik riwayat satelit <strong>3 Tahun Penuh (1095 Hari) ke belakang</strong> sebagai bukti otentik kebiasaan lama (Baseline) petani (Continuous Flooding), lalu menyimpannya secara permanen.</li>
+        <li><strong>PE (Project Emissions):</strong> Emisi riil saat ini setelah petani mematuhi protokol AWD. Sistem mengonversi <strong>"Total Hari Aerasi"</strong> dari Radar VV ke dalam tonase penurunan gas metana (CH4), lalu menetralkan (<em>net</em>) dengan kenaikan gas N2O yang menyertai praktik AWD. Rumus konversi menggunakan <strong>IPCC Tier 2</strong>: <code>NET CO2e = (Hari Aerasi × 1.22 kg CH4/ha/hari × Luas Lahan Hektar × 27 GWP × 0.653 faktor netting N2O) / 1000</code>.</li>
+        <li><strong>LE (Leakage Emissions):</strong> Emisi kebocoran di luar area proyek (biasanya diasumsikan nol).</li>
+    </ul>
+
+    <p><strong>Kenapa Metana (CH4) sangat berharga?</strong><br>
+    Dalam ilmu iklim (<em>Global Warming Potential / GWP</em>), berdasarkan IPCC AR6 (2021), 1 Ton Gas Metana yang dicegah diperkirakan setara dengan mencegah lepasnya sekitar <strong>27 Ton CO2</strong> — angka ini kami netralkan lagi dengan faktor koreksi kenaikan N2O (0.653) supaya tidak overstate manfaat sesungguhnya. Estimasi ini didasarkan pada metodologi standar internasional, bukan pengukuran langsung di tiap lahan, dan menjadi dasar mengapa kombinasi verifikasi Radar VV (bukti AWD) dan NDVI (bukti biomassa organik) berpotensi menghasilkan kredit karbon berkualitas tinggi (<em>High-Quality Carbon Credits</em>).</p>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Dibuat oleh: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>7. Ground Truthing (Bukti Fisik Lapangan) & Hysteresis</h2>
+    <p>Kelemahan sensor satelit Radar (yang rentan terhadap embun atau noise angin) diatasi AgriMRV melalui 2 lapis filtrasi:</p>
+    <ul>
+        <li><strong>Hysteresis Logika (Syarat 2 Titik):</strong> Status genangan lahan tidak akan berubah di sistem hanya karena anomali 1 hari. Status 'Kering' baru tervalidasi jika satelit secara konsisten melihat kondisi kering pada minimal 2 kali jadwal <em>scan</em> berturut-turut.</li>
+        <li><strong>Pizometer (Pipa Pantau Air):</strong> Meskipun satelit mengumpulkan data raksasa dari luar angkasa secara <em>Remote Sensing</em>, AgriMRV tetap mewajibkan <strong>Ground Truthing</strong>. Petani harus memasang Pipa Paralon berlubang (Pizometer) di sawahnya dan menginput ketinggian air tanah sesungguhnya ke dalam aplikasi sebagai kalibrator manual terhadap tebakan satelit.</li>
+    </ul>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Dibuat oleh: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>8. Lampiran Teknis: Algoritma & Kode JavaScript</h2>
+    <p>Bagian ini disediakan khusus bagi auditor teknis (Konsep <em>Whitebox</em>) guna memverifikasi bahwa perhitungan indeks murni menggunakan rumus standar internasional.</p>
+
+<pre><code>/**
+ * FUNGSI PERHITUNGAN INDEKS SATELIT (SENTINEL-2)
+ * Platform: AgriMRV by Save Subak
+ */
+
+// 1. NDVI (Normalized Difference Vegetation Index)
+export function calculateNDVI(nir, red) {
+    if (nir + red === 0) return 0; // Mencegah error pembagian 0
+    return (nir - red) / (nir + red);
+}
+
+// 2. NDWI (Normalized Difference Water Index) - Metode McFeeters
+export function calculateNDWI(green, nir) {
+    if (green + nir === 0) return 0;
+    return (green - nir) / (green + nir);
+}
+
+// 3. NBR (Normalized Burn Ratio)
+export function calculateNBR(nir, swir) {
+    if (nir + swir === 0) return 0;
+    return (nir - swir) / (nir + swir);
+}
+</code></pre>
+
+    <h2>9. Komitmen Transparansi & Kolaborasi</h2>
+    <p>Seluruh metodologi di atas adalah estimasi berbasis data satelit dan literatur ilmiah standar — bukan hasil pengukuran langsung di setiap lahan, dan belum menjalani audit karbon resmi. Kami secara aktif mengundang <strong>Rikolto</strong> dan mitra teknis lainnya untuk memberi masukan terhadap metodologi ini, khususnya pada aspek validasi lapangan (ground-truthing) dan kalibrasi ambang klasifikasi, sebagai bagian dari komitmen kami pada transparansi dan perbaikan berkelanjutan.</p>
+
+    <div class="footer" style="border: none; justify-content: center; margin-top: 30px;">
+        <span>--- Akhir Dokumen ---</span>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture manual untuk fitur Import dari KML (dibuat sesi 25 Juli 2026,
+  lihat docs/PROJECT_LOG.md untuk konteks lengkap). Tidak ada test suite
+  otomatis di project ini — file ini dipakai untuk verifikasi ulang manual
+  lewat browser tiap kali lib/kml-parser.ts atau lib/collision-detection.ts
+  diubah. 4 placemark, masing-masing menguji skenario berbeda:
+
+  1. "Test Duplikat MJ07 (eksternal)" — geometri PERSIS sama dengan petak
+     nyata "MJ07" di kawasan Kelompok tani Sri Galih (id
+     4e4348db-d578-43ce-8dcf-3fdbfc8a91ed). Harus terdeteksi LAPIS 2
+     (eksternal) ~100% overlap kalau file ini diimpor ke kawasan manapun.
+  2 & 3. "Test Internal A" + "Test Internal B (tag n)" — 2 polygon di area
+     kosong (tidak overlap petak nyata manapun) yang sengaja overlap 50%
+     satu sama lain. Harus terdeteksi LAPIS 1 (internal). #3 sengaja pakai
+     tag <n> (bukan <name> standar KML) untuk menguji fallback nama di
+     lib/kml-parser.ts — togeojson tidak mengenali <n>, jadi kalau fallback
+     rusak, nama placemark ini akan muncul sebagai "Polygon 3" alih-alih
+     "Test Internal B (tag n)".
+  4. "Test Bersih" — area kosong terpisah, tidak overlap apapun. Harus 0
+     collision di kedua lapis, otomatis tercentang di preview.
+
+  Hasil yang diharapkan (diverifikasi 25 Juli 2026 lewat curl langsung ke
+  /api/kml-import/check-collisions, database produksi asli):
+    kml-1: external=[{plotName:"MJ07", kawasanName:"Kelompok tani Sri Galih", percent:100}], internal=[]
+    kml-2: internal=[{withName:"Test Internal B (tag n)", percent:50}], external=[]
+    kml-3: internal=[{withName:"Test Internal A", percent:50}], external=[]
+    kml-4: internal=[], external=[]
+-->
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <Placemark>
+    <name>Test Duplikat MJ07 (eksternal)</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+      115.206995,-8.496991,0 115.20566,-8.496922,0 115.205622,-8.49697,0 115.205504,-8.496932,0 115.205493,-8.497113,0 115.207054,-8.497203,0 115.206995,-8.496991,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+  <Placemark>
+    <name>Test Internal A</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+      115.0492,-8.2008,0 115.0508,-8.2008,0 115.0508,-8.1992,0 115.0492,-8.1992,0 115.0492,-8.2008,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+  <Placemark>
+    <n>Test Internal B (tag n)</n>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+      115.0500,-8.2008,0 115.0516,-8.2008,0 115.0516,-8.1992,0 115.0500,-8.1992,0 115.0500,-8.2008,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+  <Placemark>
+    <name>Test Bersih</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+      115.0990,-8.1508,0 115.1010,-8.1508,0 115.1010,-8.1492,0 115.0990,-8.1492,0 115.0990,-8.1508,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+</Document>
+</kml>

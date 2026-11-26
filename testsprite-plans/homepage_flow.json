@@ -1,0 +1,9 @@
+{
+  "projectId": "79169b80-a2f3-4809-b35a-cbddb857fa1b",
+  "type": "frontend",
+  "name": "Navigation — Homepage redirects to Kawasan",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the root URL (/) of the application" },
+    { "type": "assertion", "description": "The page URL automatically redirects to /kawasan" }
+  ]
+}

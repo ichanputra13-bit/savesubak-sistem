@@ -1,0 +1,10 @@
+{
+  "projectId": "79169b80-a2f3-4809-b35a-cbddb857fa1b",
+  "type": "frontend",
+  "name": "Auth — Login page is accessible",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to /login" },
+    { "type": "assertion", "description": "The page displays a heading with the exact text 'AgriMRV'" },
+    { "type": "assertion", "description": "The page contains the text 'coming soon'" }
+  ]
+}

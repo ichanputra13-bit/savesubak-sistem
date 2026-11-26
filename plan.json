@@ -1,0 +1,25 @@
+{
+  "projectId": "79169b80-a2f3-4809-b35a-cbddb857fa1b",
+  "type": "frontend",
+  "name": "Homepage Header UI Changes",
+  "description": "Verifies that the new homepage header displays the 'Tumbuhi' logo with a red 'i' and the 'Powered by Save Subak' logo, and that the topbar with quota is not visible.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to the homepage (/)"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify that the AppTopbar containing 'Kuota Lahan' is NOT visible on the page."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify that the main sticky header displays the word 'Tumbuhi' where the letter 'i' has a red color applied."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify that the main sticky header contains an image logo or link for 'Powered by Save Subak'."
+    }
+  ]
+}

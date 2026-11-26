@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "cli-v1",
+  "snapshotId": "snap_1392d1ffe71470e7",
+  "testId": "98f886d1-ba07-4564-8ae5-00bfbf80ad36",
+  "projectId": "79169b80-a2f3-4809-b35a-cbddb857fa1b",
+  "codeVersion": "v1",
+  "runIdIfAvailable": "f19931b6-2eb9-49ac-ad38-11115c4c236d",
+  "targetUrl": "https://agrimrv.vercel.app",
+  "failedStepIndex": 3,
+  "failureKind": null,
+  "capturedAt": "2026-07-12T03:47:33.081Z",
+  "fetchedAt": "2026-07-12T03:48:36.495Z"
+}

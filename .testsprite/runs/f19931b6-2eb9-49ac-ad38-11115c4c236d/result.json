@@ -1,0 +1,18 @@
+{
+  "testId": "98f886d1-ba07-4564-8ae5-00bfbf80ad36",
+  "status": "blocked",
+  "startedAt": "2026-07-12T03:44:04.476Z",
+  "finishedAt": "2026-07-12T03:47:33.081Z",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/f4c874a8-70a1-7041-4c5e-5abca88db523/178382805284452//tmp/bcde26e7-1970-44cd-ae8d-4c92b1ce8b88/result.webm",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_1392d1ffe71470e7",
+  "runIdIfAvailable": "f19931b6-2eb9-49ac-ad38-11115c4c236d",
+  "codeVersion": "v1",
+  "targetUrl": "https://agrimrv.vercel.app",
+  "targetUrlSource": "run",
+  "failedStepIndex": 3,
+  "failureKind": null,
+  "verdict": "blocked",
+  "executionStatus": "completed",
+  "summary": "Blocked before a verdict could be produced: TEST BLOCKED: Task requirements (re-read):\n- Navigate to /farmers\n- Assert the page displays a heading containing the text 'Database Pekaseh / Petani'\n\nVerification performed:\n- The browser is on https://agrimrv.vercel.app/farmers (navigation performed earlier in this session).\n- The page displays a prominent heading with the exact text: \"Database Pekaseh / Petani\".\n- The page also shows the subtext: \"Daftar pekaseh dan petani — coming soon\".\n- Eviden…"
+}

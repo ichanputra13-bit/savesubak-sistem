@@ -1,0 +1,17 @@
+# Jangan ikut diunggah ke Vercel
+.next
+node_modules
+docs
+.testsprite
+testsprite-plans
+.vercel-tixworks-lama
+.claude
+.agents
+*.mov
+*.mp4
+*.docx
+*.png
+!public/**
+*.html
+!public/**/*.html
+.env*

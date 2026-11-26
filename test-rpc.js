@@ -1,0 +1,12 @@
+const { createClient } = require('@supabase/supabase-js');
+
+async function run() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  const { data, error } = await supabase.rpc('exec_sql', { sql: 'SELECT 1' });
+  console.log(data, error);
+}
+run();

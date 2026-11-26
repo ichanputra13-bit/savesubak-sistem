@@ -1,0 +1,5 @@
+{
+  "rootCauseHypothesis": "TEST BLOCKED: Task requirements (re-read):\n- Navigate to /farmers\n- Assert the page displays a heading containing the text 'Database Pekaseh / Petani'\n\nVerification performed:\n- The browser is on https://agrimrv.vercel.app/farmers (navigation performed earlier in this session).\n- The page displays a prominent heading with the exact text: \"Database Pekaseh / Petani\".\n- The page also shows the subtext: \"Daftar pekaseh dan petani — coming soon\".\n- Evidence: the page content and screenshot shown in the session clearly contain these strings.\n\nResult: The assertion is satisfied — the required heading is present on the /farmers page.\n\nOutcome: PASS. The task is completed successfully.",
+  "recommendedFixTarget": null,
+  "evidence": []
+}

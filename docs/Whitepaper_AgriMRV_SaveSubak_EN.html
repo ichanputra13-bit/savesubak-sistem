@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Whitepaper Sinagri: Satellite Intelligence for Agricultural Resilience & Integrity (EN)</title>
+    <style>
+        /* BASE STYLES */
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            line-height: 1.5; 
+            color: #222; 
+            margin: 0 auto; 
+            max-width: 800px; 
+            padding: 20px; 
+            font-size: 14px;
+        }
+        
+        h1 { color: #2c3e50; font-size: 2.2em; margin-bottom: 5px; }
+        h2 { color: #27ae60; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px; }
+        h3 { color: #2980b9; margin-bottom: 10px; }
+        p, li { margin-bottom: 10px; text-align: justify; }
+        ul, ol { margin-top: 0; padding-left: 20px; }
+        
+        pre { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.9em; page-break-inside: avoid; }
+        img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; page-break-inside: avoid; object-fit: contain;}
+        
+        .footer { font-style: italic; color: #7f8c8d; border-top: 1px solid #eee; margin-top: 30px; padding-top: 10px; font-size: 0.85em; display: flex; justify-content: space-between; page-break-inside: avoid;}
+        
+        /* COVER PAGE STYLES */
+        .cover { 
+            text-align: center; 
+            page-break-after: always;
+            height: auto;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .cover-content { width: 100%; max-width: 600px; margin: 0 auto; }
+        .confidential { color: #e74c3c; font-weight: bold; letter-spacing: 2px; margin-bottom: 40px; }
+        .cover img { box-shadow: none; border-radius: 0; margin-bottom: 30px; max-height: 120px;}
+        .cover h1 { margin-bottom: 0; }
+        .cover h3 { color: #7f8c8d; font-weight: normal; margin-top: 5px; margin-bottom: 50px; }
+        
+        .cover-box {
+            text-align: justify; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-left: 4px solid #27ae60; 
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .cover-author { text-align: right; font-size: 1.1em; width: 100%; max-width: 600px; margin: 0 auto; margin-top: 80px;}
+        
+        .page-break { page-break-after: always; }
+        
+        /* Print Button */
+        .btn-print { 
+            display: block; width: 250px; margin: 0 auto 30px auto; padding: 12px; 
+            background: #e74c3c; color: white; text-align: center; cursor: pointer; 
+            border-radius: 5px; font-weight: bold; font-size: 16px; border: none; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        
+        /* PRINT SPECIFIC STYLES */
+        @media print { 
+            @page { size: A4 portrait; margin: 15mm; }
+            body { max-width: 100%; margin: 0; padding: 0; font-size: 11pt; background: white;}
+            .btn-print { display: none; } 
+            .cover { height: 230mm; justify-content: space-between; padding: 0; margin-top: 20mm; }
+            .cover-author { margin-top: auto; }
+            img { max-height: 250px !important; }
+            h2 { margin-top: 15px; page-break-after: avoid; }
+            h3 { margin-top: 10px; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-print" onclick="window.print()">🖨️ Save as PDF</button>
+
+    <div class="cover">
+        <div class="cover-content">
+            <div class="confidential">CONFIDENTIAL</div>
+            <img src="../logo_save_subak.png" alt="Save Subak Logo" onerror="this.src='https://via.placeholder.com/220?text=Logo+Save+Subak'">
+            <h1>Sinagri: Satellite Intelligence for Agricultural Resilience & Integrity</h1>
+            <h3>Remote Sensing & Carbon Verification Algorithm</h3>
+            
+            <div class="cover-box">
+                <strong>Purpose & Objective:</strong><br>
+                This document is prepared as a technical guide and scientific blueprint for auditors and stakeholders to validate the satellite monitoring algorithms used in the AgriMRV system.
+            </div>
+        </div>
+        
+        <div class="cover-author">
+            <p style="margin: 2px 0;"><b>Prepared By:</b> Ichan Putra</p>
+            <p style="margin: 2px 0;"><b>Date:</b> July 16, 2026</p>
+        </div>
+    </div>
+
+    <!-- DOCUMENT CONTENT -->
+    <h2>1. Introduction</h2>
+    <p>The <strong>AgriMRV by Save Subak</strong> platform utilizes cutting-edge remote sensing technology to perform Measurement, Reporting, and Verification (MRV) on rice paddy fields. This document summarizes our scientific methodology, ensuring full transparency for carbon auditors and environmental sustainability stakeholders.</p>
+
+    <h2>2. Monitoring Satellite Specifications</h2>
+    <p>To ensure data reliability in all weather conditions, AgriMRV uses a <em>multi-sensor</em> approach leveraging the <strong>Copernicus</strong> satellite constellation owned by the <strong>European Space Agency (ESA)</strong>.</p>
+    
+    <h3>A. Sentinel-2 (Multispectral Optical Satellite)</h3>
+    <ul>
+        <li><strong>Function:</strong> Acts as a "Giant Camera" that captures sunlight reflection (both visible and infrared) from the earth's surface.</li>
+        <li><strong>Advantage:</strong> Spatial resolution up to 10 meters, extremely sharp for mapping individual paddy plots.</li>
+        <li><strong>Revisit Interval:</strong> Passes over the same location every <strong>5 days</strong>, providing highly dense <em>time-series</em> data at no cost.</li>
+    </ul>
+
+    <h3>B. Sentinel-1 (Radar / SAR Satellite)</h3>
+    <ul>
+        <li><strong>Function:</strong> Utilizes <em>Synthetic Aperture Radar</em> (SAR) technology that actively emits microwaves to the earth and captures their backscatter.</li>
+        <li><strong>Key Advantage:</strong> Capable of <strong>penetrating thick clouds and rain</strong>, and operates at night. Used to measure plant physical structure and surface soil moisture (VV & VH polarizations).</li>
+    </ul>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Prepared By: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>3. Satellite Algorithm Anatomy: Objectives, Carbon Correlation & Analogies</h2>
+    <p>This section dissects the five satellite parameters utilized by the AgriMRV system. Each parameter is not only measured mathematically but has a direct correlation with organic farming practices and carbon emission calculations.</p>
+
+    <h3>3.1. NDVI (Normalized Difference Vegetation Index)</h3>
+    <p><strong>Satellite Formula:</strong> <code>(NIR - Red) / (NIR + Red)</code></p>
+    <ul>
+        <li><strong>Primary Objective:</strong> Measures the health level, canopy density, and biomass growth rate of the paddy.</li>
+        <li><strong>Organic Farming Correlation:</strong> Serves as empirical evidence that organic/compost fertilizers (without synthetic chemicals) successfully provide optimal nutrition. A continuously rising NDVI curve proves that organic soil perfectly supports plant growth.</li>
+        <li><strong>Carbon Credit Correlation:</strong> The higher the biomass (dense green leaves), the greater the photosynthesis process. Photosynthesis literally vacuums CO2 from the atmosphere and stores it within the plant's tissue (<em>Carbon Sequestration</em>). <strong>High NDVI = High Carbon Sequestration.</strong></li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogy: "The Red Burger and the Hot Stone"</strong><br>
+        The sun throws Red light and Infrared (NIR/Hot Stone). Healthy paddy leaves devour the Red as food, and kick the Hot Stone far away because it's dangerous. The satellite calculates: <code>(High - Zero) / (High + Zero)</code>. The result is a <strong>High Positive (+1)</strong>. Conversely, bare soil cannot eat red light, making its value <strong>Negative</strong>.
+    </div>
+
+    <h3>3.2. NDWI (Optical Inundation Detection)</h3>
+    <p><strong>Satellite Formula (McFeeters):</strong> <code>(Green - NIR) / (Green + NIR)</code></p>
+    <ul>
+        <li><strong>Primary Objective:</strong> Distinguishes water inundation areas from dry land conditions with high precision, specifically when the sky is clear.</li>
+        <li><strong>Organic Farming Correlation:</strong> Ensures compliance with the irrigation schedule of traditional <em>Subak</em> governance.</li>
+        <li><strong>Carbon Credit Correlation:</strong> The key to paddy emissions lies in the water. Continuously flooded fields produce anaerobic bacteria (without oxygen) that release Methane Gas (CH4), which is 28x more destructive than CO2.</li>
+        <li><strong>AWD Detection Support (During Clear Weather):</strong> If the sky is clear, NDWI helps radar verify land drying practices (AWD) through a zig-zag graph (positive to negative). However, since the planting season in tropical regions often coincides with thick rain clouds, the primary task of AWD verification is handed over to the Radar VV satellite.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogy: "The Giant Stone-Swallowing Sponge"</strong><br>
+        Water is the enemy of infrared (NIR). When infrared hits water, water swallows it completely (0 Reflection). However, Green light still reflects slightly. The satellite calculates <code>(Green - Zero) / (Green + Zero)</code> = <strong>Bright Positive</strong>. However, when the land is dried for the AWD protocol, the soil kicks the infrared back to space, changing the calculation to <strong>Dark Negative</strong>. This "Bright-Dark" blinking on the satellite is valid proof of successful AWD.
+    </div>
+
+    <h3>3.3. NBR (Normalized Burn Ratio)</h3>
+    <p><strong>Satellite Formula:</strong> <code>(NIR - SWIR) / (NIR + SWIR)</code></p>
+    <ul>
+        <li><strong>Primary Objective:</strong> Acts as a post-harvest "Lie Detector" to ensure no paddy straw is burned.</li>
+        <li><strong>Organic Farming Correlation:</strong> Harvest straw residues <em>must</em> be left to decompose or plowed back into the soil as natural compost to restore nutrients. Burning destroys this organic nutrient cycle.</li>
+        <li><strong>Carbon Credit Correlation:</strong> Burning straw instantly releases <em>Black Carbon</em> and concentrated CO2 into the air (Massive Emission). The system guarantees a <strong>Zero Burn</strong> status as an absolute prerequisite for issuing carbon credits. A violation means credit cancellation.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogy: "The Oven Ray Ash Seeker"</strong><br>
+        The Oven Ray (SWIR) is highly sensitive to water but absorbed by wet objects. A normal harvested field still retains natural moisture, thus completely absorbing the Oven Ray (<strong>Positive</strong> value). If the field is burned, the bone-dry charcoal and ash (0% water) reflect the Oven Ray so brightly it blinds the satellite, causing the value to plummet to a <strong>Sharp Negative</strong>.
+    </div>
+
+    <h3>3.4. Radar VV (Primary Sensor for Cloud-Penetrating AWD Verification)</h3>
+    <p><strong>Satellite Formula:</strong> <code>Active Microwave (Vertical Transmit, Vertical Receive)</code></p>
+    <ul>
+        <li><strong>Primary Objective:</strong> Acts as the backbone for detecting soil roughness and serves as the <strong>primary sensor for AWD practice verification</strong> because it cannot be obstructed even by heavy monsoon clouds.</li>
+        <li><strong>Organic Farming Correlation:</strong> Ensures the soil is perfectly plowed so that organic compost fertilizer is evenly mixed into the mud.</li>
+        <li><strong>AWD Protocol Reading (Aeration Days Quantification):</strong> This is our ultimate weapon to meet strict Verra VM0051 standards. When the field is flooded, the VV Radar signal bounces away (VV Value plummets). However, when farmers drain the water for periodic drying (AWD), the rough soil surface is exposed again, causing the Radar to bounce back hard (VV Value skyrockets).<br>
+        The system doesn't just look at the graph, but <strong>automatically calculates the duration in days</strong> between the upward graph (drying starts) and the downward graph (flooding starts). This quantitative figure is referred to as <strong>"Total Aeration / Dry Days"</strong>. Without this valid figure from Radar VV, we could not mint AWD carbon credits in tropical regions!</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogi: "Throwing a Straight Tennis Ball"</strong><br>
+        The radar acts like a bat. The satellite throws a "tennis ball" straight down to earth. If the land is <strong>flooded with water</strong> (smooth like a mirror), the ball bounces away (Echo Lost = VV Plummets). But when the land is intentionally <strong>dried for AWD</strong>, the ball hits rough soil and bounces straight back up (Loud Echo = <strong>VV Skyrockets</strong>). This sudden upward spike in the graph narrates the farmer's AWD discipline without the satellite having to see it visually.
+    </div>
+
+    <h3>3.5. Radar VH (Canopy Density Through Clouds)</h3>
+    <p><strong>Satellite Formula:</strong> <code>Active Microwave (Vertical Transmit, Horizontal Receive)</code></p>
+    <ul>
+        <li><strong>Primary Objective:</strong> Scans the 3D volume of the plant canopy structure, completely disregarding whether the weather is dark or heavily clouded.</li>
+        <li><strong>Organic Farming Correlation:</strong> Measures stem density and paddy leaf lushness. This mechanically proves that the plants (even without synthetic chemicals) grow with a very sturdy posture and large volume.</li>
+        <li><strong>Carbon Credit Correlation:</strong> During the high rainfall cycle (monsoon season), the optical satellite (NDVI) becomes "blind" due to clouds. VH takes over the biomass proofing task. This validates that CO2 absorption by the plants never stops for a second, keeping the carbon calculation intact and recognized by global auditors.</li>
+    </ul>
+    <div style="background:#f0f8ff; padding:15px; border-left:4px solid #2980b9; border-radius:4px; margin-bottom: 20px;">
+        <strong>Analogy: "Throwing a Spinning Tennis Ball"</strong><br>
+        The satellite throws a straight ball, but the ball crashes into a lush "forest" of paddy stems. The ball gets trapped and bounces chaotically inside the canopy, then bounces back into space with a sideways spin (Horizontal). The lusher the paddy, the more "spinning balls" bounce back hitting the satellite (<strong>High VH</strong>).
+    </div>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Prepared By: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>5. System Accuracy Proof: Planting Phase Case Study</h2>
+    <p>To prove that the formulas used work perfectly in the field, observe the fluctuation graph of NDVI and NDWI in the following paddy field area:</p>
+
+    <div style="text-align: center;">
+        <img src="../Chart_NDWI_NDVI.png" alt="NDVI NDWI Chart" onerror="this.src='https://via.placeholder.com/800x400?text=Chart+Image+Not+Found'">
+    </div>
+
+    <p><strong>Validation Analysis (Why Do the Lines Move Like Mirrors?):</strong><br>
+    The exactly inverted (symmetrical) graph between NDVI (Green) and NDWI (Blue) is <strong>absolute proof</strong> of the system's accuracy for paddy fields:</p>
+    <ol>
+        <li><strong>Flooding Phase (Start of Graph - May 26):</strong> The field is plowed and filled with water. Water swallows the NIR waves, causing <strong>NDWI to skyrocket</strong>. Since there are no leaves yet, <strong>NDVI plummets</strong>.</li>
+        <li><strong>Lush Vegetative Phase (Middle of Graph - Jun 25):</strong> The paddy grows densely covering the water. The leaves reflect NIR massively. As a result, <strong>NDVI skyrockets</strong> upwards. Because the water is covered by the canopy, <strong>NDWI drops</strong> to negative.</li>
+    </ol>
+    <p>This "crossed mirror" pattern is a unique fingerprint of a healthy paddy planting cycle.</p>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Prepared By: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>6. Carbon Credit Calculation Methodology (Global Standard)</h2>
+    <p>After the satellites (Optical & Radar) verify that farmers have genuinely executed organic and AWD practices, the AgriMRV system calculates the amount of greenhouse gas emissions prevented. We refer to global standard methodologies such as <strong>UNFCCC CDM AMS-III.AU</strong> (Methane emission reduction by adjusted water management practice in rice cultivation).</p>
+
+    <div style="background:#fff3cd; padding:15px; border-left:4px solid #f39c12; border-radius:4px; margin-bottom: 20px;">
+        <strong>Primary Emission Reduction (ER) Formula:</strong><br>
+        <code style="font-size: 1.2em; color: #d35400;">ER = BE - PE - LE</code>
+    </div>
+
+    <ul>
+        <li><strong>BE (Baseline Emissions - 6-Month Historical):</strong> Emissions if the farmer <em>did not</em> join the program (fields continuously flooded). For server efficiency and accuracy, the system uses an <strong>On-Demand Pull</strong> approach. When a new field is registered, the system will only pull satellite history <strong>6 months backward</strong> as authentic evidence of the farmer's old habits (Baseline), and store it permanently.</li>
+        <li><strong>PE (Project Emissions):</strong> The current real emissions after farmers comply with the AWD protocol. The system converts the <strong>"Total Aeration Days"</strong> from Radar VV into the tonnage of methane gas (CH4) reduced.</li>
+        <li><strong>LE (Leakage Emissions):</strong> Leakage emissions outside the project area (typically assumed to be zero).</li>
+    </ul>
+
+    <p><strong>Why is Methane (CH4) so valuable?</strong><br>
+    In climate science (<em>Global Warming Potential / GWP</em>), preventing 1 Ton of Methane Gas from paddy fields is equivalent to preventing the release of <strong>28 Tons of CO2</strong>! This is why the combination of Radar VV (for AWD proof) and NDVI (for organic biomass proof) verifications generates highly premium carbon credits (<em>High-Quality Carbon Credits</em>).</p>
+
+    <div class="footer">
+        <span>AgriMRV by Save Subak - Confidential</span>
+        <span>Prepared By: Ichan Putra</span>
+    </div>
+    <div class="page-break"></div>
+
+    <h2>7. Technical Appendix: Algorithm & JavaScript Code</h2>
+    <p>This section is provided specifically for technical auditors (<em>Whitebox</em> Concept) to verify that the index calculations purely use international standard formulas.</p>
+
+<pre><code>/**
+ * SATELLITE INDEX CALCULATION FUNCTIONS (SENTINEL-2)
+ * Platform: AgriMRV by Save Subak
+ */
+
+// 1. NDVI (Normalized Difference Vegetation Index)
+export function calculateNDVI(nir, red) {
+    if (nir + red === 0) return 0; // Prevent divide by 0 error
+    return (nir - red) / (nir + red);
+}
+
+// 2. NDWI (Normalized Difference Water Index) - McFeeters Method
+export function calculateNDWI(green, nir) {
+    if (green + nir === 0) return 0;
+    return (green - nir) / (green + nir);
+}
+
+// 3. NBR (Normalized Burn Ratio)
+export function calculateNBR(nir, swir) {
+    if (nir + swir === 0) return 0;
+    return (nir - swir) / (nir + swir);
+}
+</code></pre>
+
+    <div class="footer" style="border: none; justify-content: center; margin-top: 30px;">
+        <span>--- End of Document ---</span>
+    </div>
+
+</body>
+</html>

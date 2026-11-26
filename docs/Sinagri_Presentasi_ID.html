@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinagri — Presentasi Metodologi Teknis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #16a34a; --green-dark: #14532d; --green-light: #dcfce7;
+    --blue: #1d4ed8; --blue-light: #dbeafe;
+    --amber: #d97706; --amber-light: #fef3c7;
+    --red: #dc2626; --red-light: #fee2e2;
+    --gray: #6b7280; --gray-light: #f9fafb; --border: #e5e7eb; --text: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Inter', sans-serif; color: var(--text);
+    background: #0b1220;
+  }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; padding: 56px 80px 90px;
+    background: white; overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide-kicker {
+    font-size: 12px; font-weight: 700; color: var(--green);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;
+  }
+  .slide h1 {
+    font-size: 30px; font-weight: 800; color: var(--green-dark);
+    border-left: 6px solid var(--green); padding-left: 16px; margin-bottom: 20px;
+    line-height: 1.25;
+  }
+  .slide h2.sub { font-size: 16px; font-weight: 700; color: var(--blue); margin: 18px 0 8px; }
+  .slide p { font-size: 15px; line-height: 1.65; color: #374151; margin-bottom: 10px; }
+  .slide .lead { font-size: 17px; color: #1f2937; }
+  .slide ul.checklist { list-style: none; margin: 8px 0; }
+  .slide ul.checklist li { font-size: 14.5px; padding: 5px 0; }
+  .slide ul.checklist li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+  .body-scroll { flex: 1; overflow-y: auto; padding-right: 6px; }
+
+  .formula-box {
+    background: #0f172a; color: #86efac; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.85; padding: 16px 22px; border-radius: 10px;
+    margin: 12px 0; overflow-x: auto; border-left: 4px solid var(--green);
+  }
+  .formula-box .comment { color: #64748b; }
+  .formula-box .var { color: #93c5fd; }
+  .formula-box .val { color: #fbbf24; }
+
+  .callout { border-radius: 10px; padding: 14px 18px; margin: 12px 0; border-left: 4px solid; font-size: 14px; }
+  .callout-green { background: var(--green-light); border-color: var(--green); }
+  .callout-blue { background: var(--blue-light); border-color: var(--blue); }
+  .callout-amber { background: var(--amber-light); border-color: var(--amber); }
+  .callout strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .callout-green strong { color: var(--green-dark); }
+  .callout-blue strong { color: var(--blue); }
+  .callout-amber strong { color: var(--amber); }
+
+  table.data-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  table.data-table th { background: var(--green-dark); color: white; padding: 8px 12px; text-align: left; }
+  table.data-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); }
+  table.data-table tr:nth-child(even) td { background: var(--gray-light); }
+  table.data-table td.highlight { color: var(--green); font-weight: 700; }
+  table.data-table td.warn { color: var(--amber); font-weight: 600; }
+  table.data-table td.danger { color: var(--red); font-weight: 700; }
+  .table-wrap { overflow-x: auto; }
+
+  .flowchart {
+    background: #0f172a; color: #e2e8f0; font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px; line-height: 1.95; padding: 16px 20px; border-radius: 10px;
+    margin: 10px 0; border-left: 4px solid var(--blue);
+  }
+  .flowchart .step { color: #93c5fd; } .flowchart .branch { color: #86efac; } .flowchart .result { color: #fbbf24; }
+
+  .figure-img { width: 100%; max-height: 260px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: var(--gray-light); }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+  .stat-card { background: var(--gray-light); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .stat-card .val { font-size: 24px; font-weight: 800; color: var(--green); }
+  .stat-card .label { font-size: 10.5px; color: var(--gray); margin-top: 2px; }
+  .stat-card .unit { font-size: 10.5px; font-weight: 600; color: var(--green-dark); }
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Cover slide */
+  .slide.cover { align-items: center; justify-content: center; text-align: center; background: linear-gradient(160deg,#f0fdf4 0%,#ffffff 50%,#eff6ff 100%); }
+  .cover .org-name { font-size: 13px; color: var(--green); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  .cover h1.title { font-size: 40px; font-weight: 800; color: var(--green-dark); border: none; padding: 0; max-width: 780px; margin-bottom: 14px; }
+  .cover .subtitle { font-size: 16px; color: var(--gray); max-width: 640px; margin-bottom: 30px; }
+  .cover .meta-pills { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .cover .pill { font-size: 12px; background: var(--green-light); color: var(--green-dark); padding: 6px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Nav chrome */
+  .chrome {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+    background: rgba(15,23,42,0.94); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 28px; z-index: 50; color: white;
+  }
+  .chrome .progress-wrap { flex: 1; margin: 0 24px; }
+  .chrome .progress-track { height: 4px; background: #334155; border-radius: 4px; overflow: hidden; }
+  .chrome .progress-fill { height: 100%; background: var(--green); transition: width .25s ease; }
+  .chrome .counter { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8; margin-top: 6px; text-align: center; }
+  .chrome button {
+    background: var(--green); color: white; border: none; padding: 10px 20px;
+    border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .chrome button:disabled { background: #334155; cursor: not-allowed; }
+  .chrome .doc-tag { font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck"></div>
+
+<div class="chrome">
+  <div class="doc-tag">SINAGRI-PRES-ID</div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="counter" id="counter">Slide 1/1</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button id="prevBtn">← Sebelumnya</button>
+    <button id="nextBtn">Selanjutnya →</button>
+  </div>
+</div>
+
+<script>
+const SLIDES = [];
+
+SLIDES.push({ cover: true, html: `
+  <div class="org-name">Save Subak</div>
+  <h1 class="title">Sinagri: Satellite Intelligence for Agricultural Resilience &amp; Integrity</h1>
+  <p class="subtitle">Metodologi teknis sistem pemantauan pengurangan emisi metana berbasis satelit untuk budidaya padi sawah organik — Standar Verra VM0051 &amp; IPCC Tier 2</p>
+  <div class="meta-pills">
+    <span class="pill">Verra VM0051 / IPCC AR6 Tier 2</span>
+    <span class="pill">ESA Copernicus (Sentinel-1 &amp; 2)</span>
+    <span class="pill">Disusun oleh Ichan Putra — Save Subak</span>
+  </div>
+`});
+
+SLIDES.push({ title: '1. Pendahuluan &amp; Latar Belakang Masalah', html: `
+  <p class="lead">Sawah padi merupakan salah satu sumber emisi gas rumah kaca (GRK) terbesar di Asia Tenggara. Kondisi anaerob (tanpa oksigen) pada sawah yang selalu tergenang menciptakan lingkungan ideal bagi bakteri metanogen untuk memproduksi <strong>Gas Metana (CH4)</strong> dalam jumlah masif dari dekomposisi bahan organik di dalam lumpur.</p>
+  <p>Gas metana diperkirakan memiliki potensi pemanasan global (<em>Global Warming Potential</em>, GWP) sekitar <strong>27 kali lipat CO2</strong> dalam siklus 100 tahun (IPCC AR6, 2021).</p>
+  <p>Di Indonesia, sektor pertanian padi berkontribusi sekitar <strong>10–12% dari total emisi GRK nasional</strong>. Petani tradisional di Bali — khususnya anggota sistem irigasi adat <em>Subak</em> — tidak memiliki akses ke alat MRV (<em>Measurement, Reporting, and Verification</em>) yang terjangkau, mudah digunakan, dan memenuhi standar verifikasi internasional untuk kredit karbon.</p>
+`});
+
+SLIDES.push({ title: 'Solusi: Platform Sinagri (AgriMRV by Save Subak)', html: `
+  <div class="callout callout-green">
+    <strong>💡 Solusi</strong>
+    Sinagri adalah platform dMRV (<em>digital Measurement, Reporting, and Verification</em>) berbasis satelit publik dari European Space Agency (ESA) yang dirancang untuk memantau, melaporkan, dan memverifikasi praktik pertanian padi organik ramah lingkungan secara otomatis, transparan, dan dapat diaudit oleh pihak mana pun tanpa bergantung pada klaim sepihak petani.
+  </div>
+  <h2 class="sub">Maksud &amp; Tujuan Sistem</h2>
+  <ul class="checklist">
+    <li>Mendeteksi dan memverifikasi penerapan <strong>AWD (Alternate Wetting and Drying)</strong> — teknik pengeringan berkala yang terbukti memotong emisi metana 30–50%.</li>
+    <li>Memantau kepatuhan <strong>Zero Burn</strong> — tidak membakar jerami sisa panen yang akan melepaskan <em>Black Carbon</em> dan CO2 masif.</li>
+    <li>Memverifikasi keberhasilan <strong>Pertanian Organik</strong> — tanpa pupuk kimia sintetis — melalui indeks kesehatan tanaman berbasis satelit.</li>
+    <li>Membangun <strong>Baseline Historis 3 Tahun</strong> sebagai bukti <em>Additionality</em> yang disyaratkan Verra VM0051.</li>
+    <li>Menghasilkan bukti ilmiah terstandar untuk penerbitan <strong>kredit karbon yang jujur, tidak dapat dipalsukan, dan dapat diaudit</strong>.</li>
+  </ul>
+`});
+
+SLIDES.push({ title: '2.1 Sentinel-2 — Satelit Optik Multispektral', html: `
+  <p><strong>Spesifikasi Teknis:</strong> Resolusi spasial 10–20m, 13 band spektral (400–2400nm), <em>revisit time</em> 5 hari per titik, tutupan awan dicatat otomatis oleh pemroses SCL (<em>Scene Classification Layer</em>).</p>
+  <p><strong>Fungsi Utama:</strong> "Kamera raksasa" yang menangkap pantulan cahaya matahari (kasat mata maupun inframerah) untuk menghitung indeks NDVI, NDWI, dan NBR.</p>
+  <div class="callout callout-amber">
+    <strong>⚠️ Keterbatasan Kritis</strong>
+    Sensor optik tidak dapat menembus awan, kabut, atau asap. Di wilayah tropis Indonesia, tutupan awan sering mencapai 70–100% selama musim hujan — bertepatan dengan masa tanam padi. Data Sentinel-2 otomatis ditolak sistem jika tutupan awan melebihi 15%.
+  </div>
+`});
+
+SLIDES.push({ title: '2.2 Sentinel-1 — Satelit Radar SAR (Backbone Sistem)', html: `
+  <p><strong>Spesifikasi Teknis:</strong> Teknologi <em>Synthetic Aperture Radar</em> (SAR) band-C, panjang gelombang 5.6 cm, polarisasi VV dan VH, <em>revisit time</em> ±6 hari, beroperasi siang dan malam.</p>
+  <p><strong>Keunggulan Mutlak:</strong> Gelombang mikro 5.6 cm memiliki panjang ribuan kali lebih besar dari partikel awan (2–200 μm) sehingga <strong>menembus awan tebal, hujan lebat, dan kabut secara sempurna</strong>. Ini menjadikan Sentinel-1 sebagai satu-satunya sensor yang dapat diandalkan untuk pemantauan sawah sepanjang tahun di iklim tropis, dan <strong>sensor utama verifikasi praktik AWD</strong>.</p>
+  <div class="callout callout-blue">
+    <strong>Analogi: Lemparan Bola Tenis</strong>
+    Radar bertindak seperti kelelawar — melempar "bola tenis" lurus ke bumi. Jika lahan digenangi air (licin seperti cermin), bola terpantul menjauh (gema hilang). Saat lahan sengaja dikeringkan untuk AWD, bola menabrak tanah kasar dan memantul lurus kembali ke atas (gema keras). Grafik yang tiba-tiba meroket naik menceritakan kedisiplinan AWD petani tanpa satelit harus "melihatnya" secara visual.
+  </div>
+`});
+
+SLIDES.push({ title: '2.3 Sistem Fallback Otomatis (Logika Pemilihan Sensor)', html: `
+  <div class="flowchart">
+<span class="step">SETIAP SIKLUS SCAN:</span>
+<span class="branch">  → [Prioritas 1] Ambil data SAR Sentinel-1 (VV &amp; VH)</span>
+<span class="branch">      Tersedia? → YA → Gunakan sebagai sensor utama ✓</span>
+<span class="branch">      Tersedia? → TIDAK → lanjut ke prioritas 2</span>
+
+<span class="branch">  → [Prioritas 2] Ambil data Sentinel-2 Optik</span>
+<span class="branch">      Tutupan awan ≤ 15%? → YA → Gunakan NDWI/NDVI ✓</span>
+<span class="branch">      Tutupan awan &gt; 15%?  → TIDAK VALID → Scan diabaikan</span>
+
+<span class="result">  HASIL: Status lahan (Basah/Kering) ditentukan berdasarkan</span>
+<span class="result">  sensor terpercaya yang tersedia pada hari tersebut.</span>
+  </div>
+  <p>Radar (Sentinel-1) selalu diprioritaskan karena bisa menembus awan — Optik (Sentinel-2) dipakai sebagai cadangan/cross-check saat langit cerah.</p>
+`});
+
+SLIDES.push({ title: '3.1 NDVI — Normalized Difference Vegetation Index', html: `
+  <p><em>Sumber ilmiah: Rouse et al. (1974), Journal of Remote Sensing of Environment.</em></p>
+  <div class="formula-box">
+<span class="comment">// Rumus NDVI (Sentinel-2)</span>
+NDVI = (ρNIR − ρRed) / (ρNIR + ρRed)
+     = (<span class="var">Band B08</span> − <span class="var">Band B04</span>) / (<span class="var">Band B08</span> + <span class="var">Band B04</span>)
+
+<span class="comment">// Panjang gelombang: B08 (NIR) = 842 nm · B04 (Red) = 665 nm</span>
+<span class="comment">// Range nilai: -1.0 hingga +1.0</span>
+  </div>
+  <div class="callout callout-blue">
+    <strong>Analogi: "Burger Merah dan Batu Panas"</strong>
+    Matahari melempar cahaya Merah dan Inframerah (Batu Panas). Daun padi sehat melahap habis si Merah, dan menendang jauh-jauh Batu Panas. Satelit menghitung (Tinggi − Nol)/(Tinggi + Nol) = <strong>Positif Tinggi</strong>. Tanah kosong tidak bisa "makan" cahaya merah, sehingga nilainya negatif.
+  </div>
+`});
+
+SLIDES.push({ title: 'NDVI — Ambang Batas &amp; Relevansi Karbon', html: `
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Nilai NDVI</th><th>Kondisi Lapangan</th><th>Status Karbon</th></tr></thead>
+    <tbody>
+      <tr><td>&lt; 0.1</td><td>Tanah kosong / bera / pasca panen</td><td>Netral</td></tr>
+      <tr><td>0.1 – 0.3</td><td>Fase semai (bibit muda)</td><td>Pertumbuhan awal</td></tr>
+      <tr><td class="highlight">0.3 – 0.5</td><td class="highlight">Fase vegetatif aktif ← Data lahan: 0.315</td><td class="highlight">Serapan karbon aktif</td></tr>
+      <tr><td>0.5 – 0.7</td><td>Fase generatif (puncak hijau)</td><td>Serapan karbon puncak</td></tr>
+      <tr><td>&gt; 0.7</td><td>Kanopi sangat lebat</td><td>Serapan karbon maksimum</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout callout-green">
+    <strong>Relevansi Kredit Karbon</strong>
+    NDVI tinggi = fotosintesis aktif = penyerapan CO2 dari atmosfer (<em>Carbon Sequestration</em>). Setiap ton biomassa padi yang tumbuh mengikat ±0.44 ton karbon organik dari udara ke jaringan tanaman dan tanah. Kurva NDVI yang terus menanjak membuktikan tanah organik mampu menopang pertumbuhan tanaman dengan sempurna, tanpa pupuk kimia sintesis.
+  </div>
+`});
+
+SLIDES.push({ title: '3.2 NDWI — Normalized Difference Water Index', html: `
+  <p><em>Sumber ilmiah: McFeeters, S.K. (1996), International Journal of Remote Sensing.</em></p>
+  <div class="formula-box">
+<span class="comment">// Rumus NDWI McFeeters (Sentinel-2)</span>
+NDWI = (ρGreen − ρNIR) / (ρGreen + ρNIR)
+     = (<span class="var">Band B03</span> − <span class="var">Band B08</span>) / (<span class="var">Band B03</span> + <span class="var">Band B08</span>)
+
+<span class="comment">// Panjang gelombang: B03 (Green) = 560 nm · B08 (NIR) = 842 nm</span>
+<span class="comment">// Threshold sistem: KERING jika NDWI &lt; -0.10</span>
+  </div>
+  <div class="callout callout-blue">
+    <strong>Analogi: "Spons Raksasa Penelan Batu"</strong>
+    Air adalah musuh inframerah — saat NIR jatuh ke air, air menelannya tanpa sisa. Cahaya Hijau tetap memantul sedikit → nilai <strong>Positif Terang</strong>. Saat lahan dikeringkan untuk AWD, tanah menendang inframerah kembali ke angkasa → nilai berubah <strong>Negatif Gelap</strong>. Kedipan "Terang-Gelap" inilah bukti valid keberhasilan AWD.
+  </div>
+`});
+
+SLIDES.push({ title: 'NDWI — Ambang Batas &amp; Kalkulasi AWD', html: `
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Nilai NDWI</th><th>Kondisi Lapangan</th><th>Kalkulasi AWD</th></tr></thead>
+    <tbody>
+      <tr><td>&gt; +0.3</td><td>Genangan penuh</td><td>Tidak ada hari aerasi</td></tr>
+      <tr><td>0.0 – 0.3</td><td>Genangan dangkal / tanah lembab</td><td>Tidak ada hari aerasi</td></tr>
+      <tr><td>-0.1 – 0.0</td><td>Zona transisi</td><td>Ambang batas</td></tr>
+      <tr><td class="danger">-0.1 hingga -0.4</td><td class="danger">KERING — Aerasi AWD berjalan ← Data lahan: -0.329</td><td class="danger">Hari aerasi dihitung ✓</td></tr>
+      <tr><td>&lt; -0.4</td><td>Kering ekstrem / fase panen</td><td>Hari aerasi dihitung ✓</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Catatan penting:</strong> di Indonesia musim tanam berbarengan dengan awan hujan pekat, sehingga tugas utama verifikasi AWD diserahkan pada Radar VV (menembus awan) — NDWI berperan sebagai pendukung/cross-check saat cuaca cerah.</p>
+`});
+
+SLIDES.push({ title: '3.3 NBR — Normalized Burn Ratio', html: `
+  <p><em>Sumber ilmiah: Key, C.H. &amp; Benson, N.C. (2006), USDA Forest Service.</em></p>
+  <div class="formula-box">
+<span class="comment">// Rumus NBR (Sentinel-2)</span>
+NBR = (ρNIR − ρSWIR2) / (ρNIR + ρSWIR2)
+    = (<span class="var">Band B08</span> − <span class="var">Band B12</span>) / (<span class="var">Band B08</span> + <span class="var">Band B12</span>)
+
+<span class="comment">// Panjang gelombang: B08 (NIR) = 842 nm · B12 (SWIR2) = 2190 nm</span>
+<span class="comment">// Ambang: NBR &gt; -0.25 → AMAN (Zero Burn) · NBR ≤ -0.25 → indikasi pembakaran</span>
+  </div>
+  <div class="callout callout-blue">
+    <strong>Analogi: "Sinar Oven Pencari Abu"</strong>
+    Sinar Oven (SWIR) terserap oleh benda basah. Lahan panen normal masih lembap → menyerap habis Sinar Oven (nilai <strong>Positif</strong>). Jika lahan dibakar, arang dan abu yang kerontang (0% air) memantulkan Sinar Oven hingga menyilaukan satelit → nilai anjlok ke <strong>Negatif Tajam</strong>.
+  </div>
+  <p>Sistem menggaransi status <strong>Zero Burn</strong> (Nol Pembakaran) sebagai syarat mutlak penerbitan kredit karbon — pelanggaran berarti pembatalan kredit.</p>
+`});
+
+SLIDES.push({ title: 'NBR — Ambang Batas &amp; Status', html: `
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Nilai NBR</th><th>Kondisi Lapangan</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>&gt; 0.4</td><td>Vegetasi sangat sehat</td><td class="highlight">✓ Sangat Aman</td></tr>
+      <tr><td class="highlight">0.1 – 0.4</td><td class="highlight">Vegetasi normal ← Data lahan: 0.148</td><td class="highlight">✓ Aman (Zero Burn)</td></tr>
+      <tr><td>-0.1 – 0.1</td><td>Tanah terbuka / pasca panen</td><td>Aman</td></tr>
+      <tr><td class="warn">-0.25 – -0.1</td><td class="warn">⚠️ Indikasi pembakaran ringan</td><td class="warn">Peringatan</td></tr>
+      <tr><td class="danger">&lt; -0.25</td><td class="danger">🔴 Pembakaran sedang-berat</td><td class="danger">Pelanggaran!</td></tr>
+    </tbody>
+  </table></div>
+`});
+
+SLIDES.push({ title: '3.4 Radar VV — Backscatter Vertikal (Backbone AWD)', html: `
+  <p><em>Sumber: ESA Sentinel-1 SAR Technical Guide. Backscatter σ°VV (sigma-nought).</em></p>
+  <div class="formula-box">
+<span class="comment">// Sentinel-1 SAR — Band C, panjang gelombang 5.6 cm, Transmisi Vertikal → Penerimaan Vertikal</span>
+σ°VV (linear) = Koefisien pantulan balik gelombang mikro
+
+<span class="comment">// Ambang batas sistem:</span>
+σ°VV ≥ <span class="val">0.28</span>  → Status: <span class="val">BASAH</span> (sawah tergenang)
+σ°VV ≤ <span class="val">0.22</span>  → Status: <span class="val">KERING</span> (aerasi berjalan)
+<span class="val">0.22</span> &lt; σ°VV &lt; <span class="val">0.28</span> → <span class="comment">Zona Mati (ambigu — diabaikan)</span>
+  </div>
+  <div class="callout callout-blue">
+    <strong>Mengapa Ada Zona Mati (0.22–0.28)?</strong>
+    Sengaja dibuat untuk mencegah <em>false positive</em>. Embun pagi, angin kencang yang membuat riak di genangan, dan variasi sudut lintasan satelit dapat menghasilkan nilai VV yang ambigu. Sistem secara konservatif tidak menghitung hari aerasi di zona ini — prinsip kehati-hatian demi integritas laporan karbon.
+  </div>
+`});
+
+SLIDES.push({ title: '3.5 Radar VH/VV — Flood Index Komposit', html: `
+  <div class="formula-box">
+<span class="comment">// Sentinel-1 — Polarisasi silang: Transmisi Vertikal → Penerimaan Horizontal</span>
+Flood Index = σ°VH / σ°VV  <span class="comment">(Rasio Cross-Polarization)</span>
+
+<span class="comment">// VH: sensitif terhadap volume &amp; struktur 3D kanopi padi</span>
+<span class="comment">// VV: sensitif terhadap permukaan tanah (kering vs basah)</span>
+<span class="comment">// Rasio VH/VV mengeliminasi pengaruh sudut lintasan satelit,</span>
+<span class="comment">// menghasilkan sinyal genangan yang lebih stabil sepanjang tahun</span>
+
+<span class="comment">// Data aktual lahan Made Sengger (12 Jul 2026): VH/VV = 0.271 → zona transisi (semi-kering)</span>
+  </div>
+  <p><strong>3.5b — Radar VH (Kepadatan Kanopi):</strong> memindai volume struktur fisik kanopi tanaman dalam 3D, tak peduli cuaca gelap/berawan. Saat curah hujan tinggi dan NDVI optik "buta" karena awan, VH mengambil alih pembuktian biomassa — memvalidasi penyerapan CO2 tanaman tidak pernah terhenti.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Akurasi Sistem: Studi Kasus Pola Cermin', html: `
+  <p class="lead">Grafik NDVI dan NDWI yang bergerak saling berkebalikan secara persis (simetris/"cermin") adalah <strong>bukti akurasi sistem</strong> untuk lahan sawah padi.</p>
+  <h2 class="sub">Mengapa Garis Bergerak Seperti Cermin?</h2>
+  <ol style="padding-left:20px; font-size:14.5px; line-height:1.8;">
+    <li><strong>Fase Genangan (awal grafik):</strong> Sawah dibajak dan dipenuhi air. Air menelan gelombang NIR → <strong>NDWI meroket tinggi</strong>. Belum ada daun → <strong>NDVI anjlok</strong>.</li>
+    <li><strong>Fase Vegetatif Rimbun (tengah grafik):</strong> Padi tumbuh lebat menutupi air. Daun memantulkan NIR secara masif → <strong>NDVI meroket tajam</strong>. Air tertutup kanopi → <strong>NDWI anjlok negatif</strong>.</li>
+  </ol>
+  <p>Pola "cermin bersilangan" ini adalah sidik jari unik dari siklus tanam padi yang sehat — berulang konsisten setiap musim tanam sepanjang 3 tahun data historis (237 titik data, Jul 2023–Jul 2026), memenuhi syarat baseline historis Verra VM0051.</p>
+`});
+
+SLIDES.push({ title: 'Algoritma Inti: Hysteresis (Anti False-Positive)', html: `
+  <p>Sistem tidak sekadar mencatat nilai indeks satelit — diterapkan algoritma <strong>Hysteresis</strong> untuk memastikan setiap Hari Aerasi benar-benar mencerminkan kondisi lapangan nyata, bukan anomali sesaat.</p>
+  <div class="flowchart">
+<span class="step">LANGKAH 1 — Pemilihan Sensor:</span>
+<span class="branch">  SAR tersedia? → Prioritas utama · Tidak? → NDWI (fallback optik, cloud ≤15%)</span>
+
+<span class="step">LANGKAH 2 — Status Mentah:</span>
+<span class="branch">  SAR: VV≥0.28→basah · VV≤0.22→kering · zona mati→skip</span>
+<span class="branch">  NDWI: skor&lt;-0.10→kering · skor≥-0.10→basah</span>
+
+<span class="step">LANGKAH 3 — Hysteresis Check:</span>
+<span class="branch">  Status sama dgn konfirmasi? → reset kandidat, tidak berubah</span>
+<span class="branch">  Beda? → naikkan candidate_run. Jika ≥2 kali berturut →</span>
+<span class="result">      TRANSISI DIKONFIRMASI, status resmi berubah</span>
+
+<span class="step">LANGKAH 4 — Akumulasi Hari Aerasi:</span>
+<span class="result">  Selama status='kering', tambahkan selisih hari antar-scan</span>
+  </div>
+`});
+
+SLIDES.push({ title: 'Kenapa Minimal 2 Scan Berturut-turut?', html: `
+  <div class="callout callout-blue">
+    <strong>Standar Teknik Pemrosesan Sinyal (Anti False-Positive)</strong>
+    Satu anomali (misal hujan deras 1 hari tiba-tiba membuat VV tinggi di tengah musim kering) tidak akan mengubah status resmi. Status hanya berubah jika <strong>dua scan independen</strong> (terpisah ±5–6 hari) secara konsisten menunjukkan kondisi yang sama — syarat kritis untuk integritas data karbon.
+  </div>
+  <h2 class="sub">Ground Truthing: Lapisan Verifikasi Kedua</h2>
+  <p>Kelemahan sensor Radar (rentan embun/noise angin) diatasi lewat 2 lapis filtrasi: (1) Hysteresis logika di atas, dan (2) <strong>Pizometer</strong> — petani memasang pipa paralon berlubang di sawahnya dan menginput ketinggian air tanah sesungguhnya ke aplikasi sebagai kalibrator manual terhadap tebakan satelit.</p>
+`});
+
+SLIDES.push({ title: 'Metodologi Karbon: Verra VM0051', html: `
+  <p>Sinagri mengikuti metodologi <strong>Verra VM0051</strong> (<em>Adoption of Sustainable Agricultural Land Management</em>), yang mewajibkan: pembuktian <em>additionality</em> (perubahan nyata dari praktik Business-As-Usual), baseline emisi historis minimal 3 tahun, dan kuantifikasi emisi proyek lewat metode terverifikasi.</p>
+  <div class="callout callout-amber" style="margin-top:16px;">
+    <strong>Rumus Utama Pengurangan Emisi</strong>
+    <span style="font-family:'JetBrains Mono',monospace; font-size:16px;">ER (Ton CO2e) = BE − PE − LE</span>
+  </div>
+  <ul class="checklist" style="margin-top:14px;">
+    <li><strong>BE (Baseline Emissions):</strong> emisi tanpa proyek — baseline 3 tahun/1.095 hari histori satelit (bukti kebiasaan lama, Continuous Flooding)</li>
+    <li><strong>PE (Project Emissions):</strong> emisi riil setelah AWD — lihat formula lengkap di slide berikutnya</li>
+    <li><strong>LE (Leakage Emissions):</strong> emisi kebocoran luar area proyek — diasumsikan nol untuk proyek skala desa</li>
+  </ul>
+`});
+
+SLIDES.push({ title: 'Formula CO2e Lengkap (PE — Project Emissions)', html: `
+  <div class="formula-box">
+<span class="comment">// Step 1: Total CH4 tercegah, gross (kg)</span>
+CH4_gross (kg) = <span class="var">Hari_Aerasi</span> × <span class="val">EF_AWD</span> × <span class="var">Luas_Ha</span>
+               = <span class="var">Hari_Aerasi</span> × <span class="val">1.22 kg CH4/ha/hari</span> × <span class="var">Luas_Ha</span>
+
+<span class="comment">// Step 2: Konversi ke CO2 Equivalen, netting kenaikan N2O yang menyertai</span>
+<span class="comment">// (AWD menekan CH4 tapi cenderung menaikkan N2O — hitung CH4 saja overstate manfaatnya)</span>
+NET CO2e (Ton) = (CH4_gross × <span class="val">GWP_CH4</span> × <span class="val">Faktor netting</span>) / 1000
+               = (CH4_gross × <span class="val">27</span> × <span class="val">0.653</span>) / 1000
+  </div>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Variabel</th><th>Nilai</th><th>Dasar Ilmiah</th></tr></thead>
+    <tbody>
+      <tr><td><strong>EF_AWD</strong></td><td>1.22 kg CH4/ha/hari</td><td>IPCC 2019 Refinement, Vol. 4 Ch. 5 (Cropland) — default Tier 1 Asia Tenggara</td></tr>
+      <tr><td><strong>GWP CH4</strong></td><td>27</td><td>IPCC AR6 (2021), Working Group I</td></tr>
+      <tr><td><strong>Faktor netting N2O</strong></td><td>0.653</td><td>Meta-analysis lintas iklim/tanah (~64.5% reduksi CH4 gross, ~42.1% reduksi GWP net) — rata-rata umum, belum spesifik Bali</td></tr>
+      <tr><td><strong>Baseline</strong></td><td>3 Tahun / 1.095 Hari</td><td>Verra VM0051 — minimal 3 tahun data historis BAU</td></tr>
+    </tbody>
+  </table></div>
+`});
+
+SLIDES.push({ title: 'Contoh Perhitungan Nyata — Lahan Made Sengger', html: `
+  <div class="stat-grid">
+    <div class="stat-card"><div class="val">54</div><div class="unit">Hari Kering</div><div class="label">dibuktikan Radar VV</div></div>
+    <div class="stat-card"><div class="val">0.424</div><div class="unit">Hektar</div><div class="label">luas lahan terdaftar</div></div>
+    <div class="stat-card"><div class="val">0.49</div><div class="unit">Ton CO2e</div><div class="label">estimasi reduksi emisi</div></div>
+  </div>
+  <div class="formula-box">
+<span class="comment">// Contoh perhitungan pakai hari aerasi &amp; luas lahan Made Sengger:</span>
+CH4_gross   = <span class="val">54</span> hari × <span class="val">1.22</span> kg/ha/hari × <span class="val">0.424</span> ha = <span class="val">27.93 kg CH4</span>
+NET CO2e    = (27.93 × <span class="val">27</span> × <span class="val">0.653</span>) / 1000 = <span class="val">0.49 Ton CO2e</span>
+  </div>
+`});
+
+SLIDES.push({ title: 'Transparansi: Estimasi Internal — Belum Tervalidasi', html: `
+  <div class="callout callout-amber">
+    <strong>⚠️ Status Estimasi Internal</strong>
+    Angka CO2e adalah estimasi Tier 2 berbasis faktor emisi regional, bukan pengukuran <em>flux chamber</em> di lapangan (Tier 3). Angka ini belum dapat digunakan untuk klaim kredit karbon resmi sebelum mendapatkan validasi lapangan (<em>third-party verification</em>) dari auditor Verra. Transparansi ini sengaja ditampilkan di sistem sebagai komitmen anti-greenwashing.
+  </div>
+  <p style="margin-top:16px;">Estimasi ini didasarkan pada metodologi standar internasional, bukan pengukuran langsung di tiap lahan — menjadi dasar mengapa kombinasi verifikasi Radar VV (bukti AWD) dan NDVI (bukti biomassa organik) berpotensi menghasilkan kredit karbon berkualitas tinggi, dengan catatan validasi lanjutan tetap diperlukan.</p>
+`});
+
+SLIDES.push({ title: 'Resiliensi Sistem: Respons Tutupan Awan', html: `
+  <p style="font-style:italic; color:#4b5563; margin-bottom:12px;">"Bagaimana sistem memverifikasi kondisi lahan saat tertutup awan 100%?" — pertanyaan paling kritis dari auditor.</p>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Layer</th><th>Mekanisme</th><th>Jaminan</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Radar Sentinel-1 menembus awan (5.6cm gelombang mikro)</td><td>Data genangan air tetap terkumpul 100%, tak terpengaruh cuaca</td></tr>
+      <tr><td><strong>2</strong></td><td>Batas waktu musim tanam (Tanam s/d Panen Aktual)</td><td>Hari aerasi hanya dihitung dalam masa tanam tervalidasi</td></tr>
+      <tr><td><strong>3</strong></td><td>Jendela awan — 5 hari revisit Sentinel-2</td><td>Dalam 6 bulan musim tanam, pasti ada hari cerah untuk cross-check</td></tr>
+      <tr><td><strong>4</strong></td><td>Radar VH mencerminkan kepadatan kanopi padi</td><td>Panen dini/mati → VH anjlok, sistem deteksi anomali</td></tr>
+      <tr><td><strong>5</strong></td><td>Foto lapangan (geotagging) oleh petani/penyuluh</td><td>Bukti visual fisik tiap tahap pertumbuhan</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:12px;">Data aktual Made Sengger: dari 34 scan optik 1 musim tanam, <strong>24 scan (70.6%) tertutup awan</strong> — namun sistem tetap mengumpulkan <strong>294 pass Radar SAR</strong>, jauh lebih kaya, tidak pernah terganggu awan.</p>
+`});
+
+const figureImg = (src, alt) => `<img class="figure-img" src="Gambar/${src}" alt="${alt}" onerror="this.style.display='none'">`;
+
+SLIDES.push({ title: 'Bukti Visual 1 — Peta NDVI &amp; Poligon Batas Lahan', html: `
+  ${figureImg('Screenshot 2026-07-16 184858.png','Peta NDVI dan Poligon Batas Lahan')}
+  <p style="margin-top:10px;">Tampilan peta lahan Made Sengger (0.424 ha) di Kawasan Subak Sangeh. Garis putih tebal adalah <strong>Poligon Batas Lahan berbasis GPS</strong> yang didaftarkan presisi ke sistem. Warna hijau tua di dalam poligon adalah overlay layer NDVI — lahan dalam fase vegetatif aktif saat screenshot diambil. Label "Vegetatif" adalah output otomatis sistem dari nilai NDVI 0.315.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 2 — Panel Indeks Satelit Harian', html: `
+  ${figureImg('Screenshot 2026-07-16 184927.png','Panel Indeks Harian')}
+  <p style="margin-top:10px;">Nilai 4 indeks dari scan 12 Juli 2026: <strong>NDVI=0.315</strong> (vegetatif aktif), <strong>NDWI=-0.329</strong> (kering, hari aerasi dicatat), <strong>NBR=0.148</strong> (Zero Burn terkonfirmasi), <strong>VH/VV=0.271</strong> (zona transisi). Tautan verifikasi langsung ke Copernicus Browser membuktikan data bisa dikonfirmasi independen.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 3 — Tren NDVI &amp; NDWI 3 Tahun', html: `
+  ${figureImg('Screenshot 2026-07-16 184946.png','Tren NDVI dan NDWI 3 Tahun')}
+  <p style="margin-top:10px;"><strong>237 scan nyata</strong> dari Jul 2023–Jul 2026 (hampir 3 tahun berkelanjutan) — memenuhi syarat baseline historis Verra VM0051. Pola simetris berlawanan (cermin) antara NDVI &amp; NDWI adalah "sidik jari" ilmiah dari siklus tanam padi sehat.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 4 — Monitor Zero Burn (Grafik NBR)', html: `
+  ${figureImg('Screenshot 2026-07-16 185000.png','Grafik NBR 3 Tahun')}
+  <p style="margin-top:10px;">237 scan, 3 tahun. Area merah muda di bawah garis -0.25 adalah Zona Peringatan Pembakaran. <strong>0 titik data pernah jatuh konsisten ke zona merah</strong> — petani mematuhi Zero Burn secara ketat sepanjang periode baseline.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 5 — Radar SAR: Bukti AWD Tembus Awan', html: `
+  ${figureImg('Screenshot 2026-07-16 185017.png','Grafik Radar SAR')}
+  <p style="margin-top:10px;"><strong>294 pass</strong> dalam 3 tahun — jauh lebih banyak dari 237 scan optik karena Radar tak pernah terhalang awan. Pola zig-zag konsisten adalah rekam jejak digital praktik AWD yang aktif berjalan di lapangan.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 6 — Analisis Otomatis (Rule-Based)', html: `
+  ${figureImg('Screenshot 2026-07-16 185037.png','Analisis Otomatis')}
+  <p style="margin-top:10px;">Panel <em>Analisis Otomatis</em> menerjemahkan angka indeks jadi kesimpulan agronomis terbaca petani. Label "rule-based" = transparansi: kesimpulan dari aturan deterministik jelas, bukan black-box AI.</p>
+  <p style="font-style:italic; color:#6b7280; font-size:13px;">Catatan: panel ini bernama "Analisis Otomatis" di aplikasi sekarang (diganti dari nama sebelumnya). Screenshot di atas belum diperbarui dan masih menampilkan label lama "Insight Otomatis" pada tampilannya sendiri — dicatat terbuka, bukan disembunyikan.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 7 — Tab Musim Tanam &amp; Deteksi AWD', html: `
+  ${figureImg('Screenshot 2026-07-16 185054.png','Musim Tanam dan Deteksi AWD')}
+  <p style="margin-top:10px;">Musim 1/2026 (Tanam 16 Jan → Panen 10 Jun, hasil 1.978 kg gabah): "24 dari 34 scan optik tertutup awan (70.6%) — gunakan SAR sebagai cadangan" — bukti nyata Sistem Fallback Radar bekerja otomatis. Pola pengairan diklasifikasi "Basah-kering berulang (indikasi AWD)" dari 12 transisi, 67 titik data gabungan.</p>
+`});
+
+SLIDES.push({ title: 'Bukti Visual 8 &amp; 9 — Kepemilikan &amp; Tab Karbon', html: `
+  <div class="cols-2">
+    <div>
+      ${figureImg('Screenshot 2026-07-16 185116.png','Tab Kepemilikan')}
+      <p style="margin-top:8px; font-size:13px;">Rantai kepemilikan lahan (chain of custody) — Made Sengger tercatat pemilik aktif sejak 6 Jul 2026. Menjamin kredit karbon terhubung ke identitas fisik yang benar.</p>
+    </div>
+    <div>
+      ${figureImg('Screenshot_2026-07-19_TabKarbon_MadeSengger_NET049.png.png','Tab Karbon')}
+      <p style="margin-top:8px; font-size:13px;"><strong>54 Hari Kering</strong>, <strong>NET CO2e 0.49 Ton</strong>, checklist Verra 3/3 ✓. Banner kuning: "Estimasi Internal — Belum Tervalidasi".</p>
+    </div>
+  </div>
+`});
+
+SLIDES.push({ title: 'Keterbatasan Sistem &amp; Komitmen Transparansi (1/2)', html: `
+  <p>Sinagri berkomitmen penuh pada kejujuran ilmiah. Keterbatasan berikut diakui secara terbuka:</p>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Keterbatasan</th><th>Dampak</th><th>Mitigasi</th></tr></thead>
+    <tbody>
+      <tr><td>Faktor emisi Tier 2 (1.22 kg CH4/ha/hari) adalah rata-rata regional, bukan ukuran spesifik lahan</td><td>Bisa over/under-estimate ±30%</td><td>Label "Estimasi Internal"; rencana upgrade Tier 3 (flux chamber)</td></tr>
+      <tr><td>Tidak ada variabel jenis tanah / kandungan karbon organik tanah (SOC)</td><td>Faktor emisi bisa berbeda antar lahan</td><td>Kolom input jenis tanah tersedia untuk penyempurnaan ke depan</td></tr>
+      <tr><td>Ground Truthing Pizometer masih manual (bukan IoT)</td><td>Potensi keterlambatan input data lapangan</td><td>Rencana integrasi sensor IoT ketinggian air</td></tr>
+      <tr><td>Zona mati VV (0.22–0.28) tidak dihitung</td><td>Sedikit under-count hari aerasi</td><td>Konservatif — menguntungkan integritas laporan</td></tr>
+    </tbody>
+  </table></div>
+`});
+
+SLIDES.push({ title: 'Keterbatasan Sistem &amp; Komitmen Transparansi (2/2)', html: `
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Keterbatasan</th><th>Dampak</th><th>Mitigasi</th></tr></thead>
+    <tbody>
+      <tr><td>Ambang klasifikasi pola air (misal "≥5 transisi") ditetapkan lewat penalaran domain berdasarkan sampel terbatas — saat ini 6 musim tanam — bukan kalibrasi statistik skala besar</td><td>Ambang mungkin belum general untuk lahan/tanah/iklim baru sampai lebih banyak musim dianalisis</td><td>Didokumentasikan eksplisit di catatan migrasi database; dijadwalkan dikalibrasi ulang seiring bertambahnya musim</td></tr>
+      <tr><td>Arah interpretasi SAR flood_index (VH/VV) — nilai mana "tergenang" vs "kering" — belum divalidasi silang dengan tanggal basah/kering yang dikonfirmasi petani langsung</td><td>Klasifikasi basah/kering yang jadi dasar semua metrik turunan masih bertumpu pada asumsi arah yang belum terverifikasi</td><td>Ground-truthing Pizometer adalah mekanisme yang direncanakan untuk menutup celah ini — belum selesai dikerjakan</td></tr>
+      <tr><td>Faktor koreksi netting N2O (0.653) diambil dari meta-analysis umum lintas iklim/tanah, bukan studi lapangan khusus Bali</td><td>Angka NET CO2e mungkin belum mencerminkan kondisi tanah/iklim lokal secara presisi</td><td>Ditandai di seluruh dokumentasi formula; klaim resmi wajib direview qualified GHG accountant</td></tr>
+    </tbody>
+  </table></div>
+`});
+
+SLIDES.push({ title: 'Lampiran Teknis: Kode Verifikasi (Whitebox)', html: `
+  <p>Bagian ini disediakan khusus bagi auditor teknis (konsep <em>Whitebox</em>) guna memverifikasi bahwa perhitungan indeks murni menggunakan rumus standar internasional — bukan black-box tersembunyi.</p>
+  <div class="formula-box" style="color:#e2e8f0;">
+<span class="comment">/**
+ * FUNGSI PERHITUNGAN INDEKS SATELIT (SENTINEL-2)
+ * Platform: Sinagri (AgriMRV by Save Subak)
+ */</span>
+
+<span class="comment">// 1. NDVI (Normalized Difference Vegetation Index)</span>
+export function calculateNDVI(nir, red) {
+    if (nir + red === 0) return 0; <span class="comment">// Mencegah error pembagian 0</span>
+    return (nir - red) / (nir + red);
+}
+
+<span class="comment">// 2. NDWI (Normalized Difference Water Index) - Metode McFeeters</span>
+export function calculateNDWI(green, nir) {
+    if (green + nir === 0) return 0;
+    return (green - nir) / (green + nir);
+}
+
+<span class="comment">// 3. NBR (Normalized Burn Ratio)</span>
+export function calculateNBR(nir, swir) {
+    if (nir + swir === 0) return 0;
+    return (nir - swir) / (nir + swir);
+}
+  </div>
+`});
+
+SLIDES.push({ title: 'Undangan untuk Review Kolaboratif', html: `
+  <p class="lead">Seluruh metodologi dalam presentasi ini adalah estimasi berbasis data satelit dan literatur ilmiah standar — bukan hasil pengukuran langsung di setiap lahan, dan belum menjalani audit karbon resmi.</p>
+  <div class="callout callout-green" style="margin-top:18px;">
+    <strong>Komitmen Transparansi &amp; Perbaikan Berkelanjutan</strong>
+    Kami secara aktif mengundang mitra teknis dan lembaga verifikasi untuk memberi masukan terhadap metodologi ini, khususnya pada aspek validasi lapangan (ground-truthing) dan kalibrasi ambang klasifikasi — sebagai bagian dari komitmen kami pada transparansi dan perbaikan berkelanjutan.
+  </div>
+  <p style="margin-top:20px; color:#6b7280; font-size:13px;">Sinagri (AgriMRV by Save Subak) — dokumen ini adalah materi presentasi ringkas, disusun dari Whitepaper dan Laporan Verifikasi Teknis yang lebih lengkap tersedia terpisah.</p>
+`});
+
+// ---------- Deck engine ----------
+let current = 0;
+const deck = document.getElementById('deck');
+const counter = document.getElementById('counter');
+const progressFill = document.getElementById('progressFill');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function render() {
+  deck.innerHTML = '';
+  SLIDES.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slide' + (i === current ? ' active' : '') + (s.cover ? ' cover' : '');
+    if (s.cover) {
+      el.innerHTML = s.html;
+    } else {
+      el.innerHTML = `<div class="slide-kicker">Sinagri — Metodologi Teknis</div><h1>${s.title}</h1><div class="body-scroll">${s.html}</div>`;
+    }
+    deck.appendChild(el);
+  });
+  counter.textContent = `Slide ${current + 1}/${SLIDES.length}`;
+  progressFill.style.width = ((current + 1) / SLIDES.length * 100) + '%';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === SLIDES.length - 1;
+}
+
+function go(delta) {
+  const next = current + delta;
+  if (next < 0 || next >= SLIDES.length) return;
+  current = next;
+  render();
+}
+
+prevBtn.addEventListener('click', () => go(-1));
+nextBtn.addEventListener('click', () => go(1));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriMRV Technical Verification Report — Save Subak</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #16a34a;
+    --green-dark: #14532d;
+    --green-light: #dcfce7;
+    --blue: #1d4ed8;
+    --blue-light: #dbeafe;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --gray: #6b7280;
+    --gray-light: #f9fafb;
+    --border: #e5e7eb;
+    --text: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.7;
+    background: #f3f4f6;
+  }
+  .page {
+    background: white;
+    max-width: 900px;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  }
+  .site-header {
+    background: white;
+    border-bottom: 3px solid var(--green);
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .site-header img { height: 36px; object-fit: contain; }
+  .site-header .header-center .doc-id { font-size: 10px; color: var(--gray); letter-spacing: 1px; }
+  .site-header .header-right { text-align: right; font-size: 11px; color: var(--gray); }
+  .site-header .header-right a { color: var(--green); text-decoration: none; font-weight: 600; }
+
+  .confidential {
+    background: #fef2f2;
+    border: 2px solid #fca5a5;
+    color: #991b1b;
+    text-align: center;
+    padding: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+
+  .cover {
+    min-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 60px 40px;
+    text-align: center;
+    background: linear-gradient(160deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%);
+  }
+  .cover img.logo { height: 80px; margin-bottom: 30px; }
+  .cover .org-name { font-size: 13px; color: var(--green); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .cover .org-url { font-size: 11px; color: var(--gray); margin-bottom: 40px; }
+  .cover .doc-code { font-size: 10px; background: var(--green-light); color: var(--green-dark); padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; margin-bottom: 20px; display: inline-block; }
+  .cover h1 { font-size: 26px; font-weight: 800; color: var(--green-dark); line-height: 1.3; max-width: 700px; margin-bottom: 10px; }
+  .cover .subtitle { font-size: 14px; color: var(--gray); max-width: 600px; margin-bottom: 40px; }
+  .cover .cover-meta { border-top: 1px solid var(--border); padding-top: 24px; width: 100%; max-width: 500px; }
+  .cover .cover-meta table { width: 100%; font-size: 12px; }
+  .cover .cover-meta td { padding: 4px 8px; }
+  .cover .cover-meta td:first-child { color: var(--gray); font-weight: 500; text-align: left; }
+  .cover .cover-meta td:last-child { font-weight: 600; text-align: right; }
+  .cover .presented-by { margin-top: 20px; font-size: 11px; color: var(--gray); }
+
+  .content { padding: 50px 60px; }
+
+  h2.section-title {
+    font-size: 18px; font-weight: 800; color: var(--green-dark);
+    border-left: 5px solid var(--green); padding-left: 14px;
+    margin: 50px 0 20px;
+  }
+  h3.sub-title {
+    font-size: 14px; font-weight: 700; color: var(--blue);
+    margin: 30px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  p { margin-bottom: 12px; color: #374151; }
+
+  .formula-box {
+    background: #0f172a; color: #86efac;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.9;
+    padding: 18px 24px; border-radius: 10px;
+    margin: 16px 0; overflow-x: auto;
+    border-left: 4px solid var(--green);
+  }
+  .formula-box .comment { color: #64748b; }
+  .formula-box .var { color: #93c5fd; }
+  .formula-box .val { color: #fbbf24; }
+
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 16px 0; border-left: 4px solid; }
+  .callout-green { background: var(--green-light); border-color: var(--green); }
+  .callout-blue { background: var(--blue-light); border-color: var(--blue); }
+  .callout-amber { background: var(--amber-light); border-color: var(--amber); }
+  .callout-red { background: var(--red-light); border-color: var(--red); }
+  .callout strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .callout-green strong { color: var(--green-dark); }
+  .callout-blue strong { color: var(--blue); }
+  .callout-amber strong { color: var(--amber); }
+  .callout-red strong { color: var(--red); }
+
+  table.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+  table.data-table th { background: var(--green-dark); color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+  table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  table.data-table tr:nth-child(even) td { background: var(--gray-light); }
+  table.data-table td.highlight { color: var(--green); font-weight: 700; }
+  table.data-table td.warn { color: var(--amber); font-weight: 600; }
+  table.data-table td.danger { color: var(--red); font-weight: 700; }
+
+  .flowchart {
+    background: #0f172a; color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; line-height: 2;
+    padding: 20px 24px; border-radius: 10px;
+    margin: 16px 0; border-left: 4px solid var(--blue);
+  }
+  .flowchart .step { color: #93c5fd; }
+  .flowchart .branch { color: #86efac; }
+  .flowchart .result { color: #fbbf24; }
+
+  .figure { margin: 24px 0; }
+  .figure img { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+  .figure .caption {
+    background: var(--gray-light); border: 1px solid var(--border); border-top: none;
+    padding: 12px 16px; border-radius: 0 0 10px 10px;
+    font-size: 11.5px; color: #374151;
+  }
+  .figure .caption strong { color: var(--green-dark); display: block; margin-bottom: 4px; font-size: 12px; }
+  .figure .caption .data-note { background: white; border: 1px solid var(--green-light); border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 11px; }
+  .figure .caption .data-note span { color: var(--green); font-weight: 700; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .stat-card { background: var(--gray-light); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .stat-card .val { font-size: 26px; font-weight: 800; color: var(--green); }
+  .stat-card .label { font-size: 11px; color: var(--gray); margin-top: 4px; }
+  .stat-card .unit { font-size: 11px; font-weight: 500; color: var(--green-dark); }
+
+  .page-footer {
+    border-top: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px; color: var(--gray);
+    background: var(--gray-light);
+  }
+
+  .site-footer {
+    background: var(--green-dark); color: white;
+    text-align: center; padding: 20px;
+    font-size: 12px;
+  }
+  .site-footer a { color: #86efac; text-decoration: none; }
+
+  .btn-print {
+    display: block; width: 240px; margin: 20px auto;
+    padding: 12px; background: var(--green); color: white;
+    text-align: center; border-radius: 8px; font-weight: 700;
+    font-size: 14px; border: none; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .section-divider { border: none; border-top: 2px dashed var(--border); margin: 40px 0; }
+
+  .checklist { list-style: none; }
+  .checklist li { padding: 6px 0; font-size: 12.5px; }
+  .checklist li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+
+  @media print {
+    body { background: white; font-size: 11pt; }
+    .btn-print { display: none; }
+    .site-header { position: static; }
+    .page { box-shadow: none; max-width: 100%; margin: 0; }
+    h2.section-title { page-break-before: always; }
+    .cover { page-break-after: always; }
+    .figure img { max-height: 300px; object-fit: contain; }
+    @page { size: A4; margin: 15mm 15mm 20mm 15mm; }
+  }
+</style>
+</head>
+<body>
+
+<button class="btn-print" onclick="window.print()">🖨️ Save as PDF</button>
+
+<div class="page">
+  <!-- SITE HEADER -->
+  <div class="site-header">
+    <img src="../logo_save_subak.png" alt="Save Subak" onerror="this.style.display='none'">
+    <div class="header-center">
+      <div style="font-size:11px;font-weight:600;color:#16a34a;">TECHNICAL VERIFICATION REPORT — AgriMRV</div>
+      <div class="doc-id">AgriMRV-TVR-2026-001-EN</div>
+    </div>
+    <div class="header-right">
+      <a href="https://www.savesubak.org" target="_blank">www.savesubak.org</a><br>
+      <span>Presented by Ichan Putra</span>
+    </div>
+  </div>
+  <div class="confidential">⬛ CONFIDENTIAL — FOR AUTHORIZED AUDITORS AND GOVERNMENT AGENCIES ONLY ⬛</div>
+
+  <!-- COVER PAGE -->
+  <div class="cover">
+    <img class="logo" src="../logo_save_subak.png" alt="Save Subak" onerror="this.src='https://placehold.co/200x80?text=Save+Subak'">
+    <div class="org-name">Save Subak</div>
+    <div class="org-url">www.savesubak.org</div>
+    <div class="doc-code">AgriMRV-TVR-2026-001-EN • CONFIDENTIAL</div>
+    <h1>AgriMRV Technical Verification Report</h1>
+    <p class="subtitle">Satellite-Based Methane Emission Reduction Monitoring System for Organic Paddy Cultivation — Verra VM0051 & IPCC Tier 2 Standards</p>
+    <div class="cover-meta">
+      <table>
+        <tr><td>Issue Date</td><td>16 July 2026</td></tr>
+        <tr><td>Document Code</td><td>AgriMRV-TVR-2026-001-EN</td></tr>
+        <tr><td>Version</td><td>1.0</td></tr>
+        <tr><td>Classification</td><td style="color:#dc2626;font-weight:800;">CONFIDENTIAL</td></tr>
+        <tr><td>Methodology</td><td>Verra VM0051 / IPCC AR6 Tier 2</td></tr>
+        <tr><td>Satellite Source</td><td>ESA Copernicus (Sentinel-1 & 2)</td></tr>
+      </table>
+      <div class="presented-by">Presented by <strong>Ichan Putra</strong> — Save Subak</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- CHAPTER 1 -->
+    <h2 class="section-title">1. Introduction & Problem Statement</h2>
+    <p>Paddy rice cultivation is one of the largest sources of greenhouse gas (GHG) emissions in Southeast Asia. The anaerobic (oxygen-deprived) conditions in continuously flooded rice paddies create an ideal environment for methanogenic bacteria to produce <strong>Methane gas (CH4)</strong> in massive quantities through the decomposition of organic matter in waterlogged soil. Methane is estimated to have a Global Warming Potential (GWP) of approximately <strong>27 times that of CO2</strong> over a 100-year cycle (IPCC AR6, 2021).</p>
+    <p>In Indonesia, the rice farming sector contributes approximately <strong>10–12% of total national GHG emissions</strong>. Traditional farmers in Bali — particularly members of the traditional <em>Subak</em> irrigation system — lack access to affordable, user-friendly MRV (<em>Measurement, Reporting, and Verification</em>) tools that meet international carbon verification standards.</p>
+
+    <div class="callout callout-green">
+      <strong>💡 Solution: AgriMRV Platform by Save Subak</strong>
+      <p>AgriMRV is a dMRV (<em>digital Measurement, Reporting, and Verification</em>) platform built on publicly available satellite data from the European Space Agency (ESA). It is designed to monitor, report, and verify organic, environmentally-friendly rice farming practices automatically, transparently, and in a manner auditable by any third party — without relying on unilateral farmer claims.</p>
+    </div>
+
+    <h3 class="sub-title">1.1 Purpose and Objectives</h3>
+    <ul class="checklist">
+      <li>Detect and verify the implementation of <strong>AWD (Alternate Wetting and Drying)</strong> — a water management technique proven to reduce methane emissions by 30–50%.</li>
+      <li>Monitor compliance with <strong>Zero Burn</strong> protocols — prohibiting the burning of rice straw residue, which releases Black Carbon and massive CO2.</li>
+      <li>Verify the success of <strong>Organic Farming</strong> — without synthetic chemical fertilizers — through satellite-based plant health indices.</li>
+      <li>Establish a <strong>3-Year Historical Baseline</strong> as proof of <em>Additionality</em> required by Verra VM0051.</li>
+      <li>Produce scientifically valid evidence for the issuance of <strong>honest, tamper-proof, and auditable carbon credits</strong>.</li>
+    </ul>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 2 -->
+    <h2 class="section-title">2. Dual-Sensor Satellite Architecture</h2>
+    <p>AgriMRV employs a <em>multi-sensor</em> approach using the <strong>Copernicus</strong> satellite constellation operated by ESA/European Union. All data is publicly available and can be independently verified by any party through <a href="https://dataspace.copernicus.eu" style="color:var(--green)">dataspace.copernicus.eu</a>.</p>
+
+    <h3 class="sub-title">2.1 Sentinel-2 (Optical Multispectral Satellite)</h3>
+    <p><strong>Technical Specifications:</strong> 10–20m spatial resolution, 13 spectral bands (400–2400nm), 5-day revisit time per location, cloud cover automatically recorded via SCL (<em>Scene Classification Layer</em>).</p>
+    <p><strong>Primary Function:</strong> High-precision surface reflectance measurement to compute NDVI, NDWI, and NBR indices.</p>
+    <div class="callout callout-amber">
+      <strong>⚠️ Critical Limitation</strong>
+      Optical sensors cannot penetrate clouds, fog, or smoke. In tropical Indonesia, cloud cover frequently reaches 70–100% during the wet season — which coincides with the rice growing season. Sentinel-2 data is automatically rejected by the system if cloud cover exceeds 15%.
+    </div>
+
+    <h3 class="sub-title">2.2 Sentinel-1 (SAR Radar Satellite — System Backbone)</h3>
+    <p><strong>Technical Specifications:</strong> C-band SAR (<em>Synthetic Aperture Radar</em>), 5.6 cm wavelength, VV and VH polarizations, ±6-day revisit time, day/night capable.</p>
+    <p><strong>Absolute Advantage:</strong> The 5.6 cm microwave wavelength is thousands of times larger than cloud particles (2–200 μm), meaning it <strong>completely penetrates thick clouds, heavy rain, and fog</strong>. This makes Sentinel-1 the only sensor that can be reliably used for year-round paddy field monitoring in a tropical climate.</p>
+
+    <h3 class="sub-title">2.3 Automatic Fallback System (Sensor Selection Logic)</h3>
+    <div class="flowchart">
+<span class="step">EVERY SCAN CYCLE:</span>
+<span class="branch">  → [Priority 1] Fetch SAR data from Sentinel-1 (VV & VH)</span>
+<span class="branch">      Available? → YES → Use as primary sensor ✓</span>
+<span class="branch">      Available? → NO  → proceed to priority 2</span>
+
+<span class="branch">  → [Priority 2] Fetch Sentinel-2 Optical data</span>
+<span class="branch">      Cloud cover ≤ 15%? → YES → Use NDWI/NDVI ✓</span>
+<span class="branch">      Cloud cover > 15%?  → NOT VALID → scan discarded</span>
+
+<span class="result">  OUTPUT: Field status (Wet/Dry) determined based on</span>
+<span class="result">  the most reliable sensor available on that day.</span>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 3 -->
+    <h2 class="section-title">3. Five Satellite Parameters — Formulas, Thresholds & Carbon Relevance</h2>
+
+    <h3 class="sub-title">3.1 NDVI — Normalized Difference Vegetation Index</h3>
+    <p><em>Scientific source: Rouse et al. (1974). Journal of Remote Sensing of Environment.</em></p>
+    <div class="formula-box">
+<span class="comment">// NDVI Formula (Sentinel-2)</span>
+NDVI = (ρNIR − ρRed) / (ρNIR + ρRed)
+     = (<span class="var">Band B08</span> − <span class="var">Band B04</span>) / (<span class="var">Band B08</span> + <span class="var">Band B04</span>)
+
+<span class="comment">// Wavelengths:</span>
+B08 = NIR (Near-Infrared) → <span class="val">842 nm</span>
+B04 = Red                 → <span class="val">665 nm</span>
+
+<span class="comment">// Value range: -1.0 to +1.0</span>
+    </div>
+    <p><strong>Why NIR and Red?</strong> Healthy rice leaves have <em>mesophyll</em> cells with a sponge-like structure that <strong>strongly reflects NIR (high B08)</strong> while <strong>absorbing red light for photosynthesis (low B04)</strong>. Result: NDVI = (High − Low)/(High + Low) = <strong>positive approaching +1</strong>. Bare soil or dead plants lack active cell structures → values approach 0 or go negative.</p>
+    <table class="data-table">
+      <thead><tr><th>NDVI Value</th><th>Field Condition</th><th>Carbon Status</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; 0.1</td><td>Bare soil / fallow / post-harvest</td><td>Neutral</td></tr>
+        <tr><td>0.1 – 0.3</td><td>Seedling stage (young plants)</td><td>Early growth</td></tr>
+        <tr><td class="highlight">0.3 – 0.5</td><td class="highlight">Active vegetative stage ← Field data: 0.315</td><td class="highlight">Active carbon sequestration</td></tr>
+        <tr><td>0.5 – 0.7</td><td>Generative stage (peak greenness)</td><td>Peak carbon sequestration</td></tr>
+        <tr><td>&gt; 0.7</td><td>Very dense canopy</td><td>Maximum carbon sequestration</td></tr>
+      </tbody>
+    </table>
+    <div class="callout callout-green">
+      <strong>Carbon Credit Relevance</strong>
+      High NDVI = active photosynthesis = active CO2 absorption from the atmosphere (<em>Carbon Sequestration</em>). Each ton of paddy biomass that grows binds approximately ±0.44 tons of organic carbon from the air into plant tissue and soil.
+    </div>
+
+    <h3 class="sub-title">3.2 NDWI — Normalized Difference Water Index</h3>
+    <p><em>Scientific source: McFeeters, S.K. (1996). International Journal of Remote Sensing.</em></p>
+    <div class="formula-box">
+<span class="comment">// NDWI McFeeters Formula (Sentinel-2)</span>
+NDWI = (ρGreen − ρNIR) / (ρGreen + ρNIR)
+     = (<span class="var">Band B03</span> − <span class="var">Band B08</span>) / (<span class="var">Band B03</span> + <span class="var">Band B08</span>)
+
+<span class="comment">// Wavelengths:</span>
+B03 = Green → <span class="val">560 nm</span>
+B08 = NIR   → <span class="val">842 nm</span>
+
+<span class="comment">// System AWD threshold: DRY if NDWI &lt; -0.10</span>
+    </div>
+    <p><strong>Why Green and NIR?</strong> Water has a unique physical property: it <strong>absorbs NIR wavelengths almost completely</strong> (B08 near zero above water bodies) while still reflecting a small amount of green light (B03 positive small). Result: (Small − Zero) = <strong>positive</strong> → water detected. When land is dry, leaves strongly reflect NIR → B08 high → NDWI goes negative.</p>
+    <table class="data-table">
+      <thead><tr><th>NDWI Value</th><th>Field Condition</th><th>AWD Calculation</th></tr></thead>
+      <tbody>
+        <tr><td>&gt; +0.3</td><td>Full flooding</td><td>No aeration days</td></tr>
+        <tr><td>0.0 – 0.3</td><td>Shallow flooding / wet soil</td><td>No aeration days</td></tr>
+        <tr><td>-0.1 – 0.0</td><td>Transition zone</td><td>Threshold boundary</td></tr>
+        <tr><td class="danger">-0.1 to -0.4</td><td class="danger">DRY — AWD Aeration active ← Field data: -0.329</td><td class="danger">Aeration days counted ✓</td></tr>
+        <tr><td>&lt; -0.4</td><td>Extreme dry / harvest phase</td><td>Aeration days counted ✓</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">3.3 NBR — Normalized Burn Ratio</h3>
+    <p><em>Scientific source: Key, C.H. & Benson, N.C. (2006). USDA Forest Service General Technical Report.</em></p>
+    <div class="formula-box">
+<span class="comment">// NBR Formula (Sentinel-2)</span>
+NBR = (ρNIR − ρSWIR2) / (ρNIR + ρSWIR2)
+    = (<span class="var">Band B08</span> − <span class="var">Band B12</span>) / (<span class="var">Band B08</span> + <span class="var">Band B12</span>)
+
+<span class="comment">// Wavelengths:</span>
+B08  = NIR   (Near-Infrared)        → <span class="val">842 nm</span>
+B12  = SWIR2 (Short-Wave Infrared)  → <span class="val">2190 nm</span>
+
+<span class="comment">// System burn detection threshold:</span>
+NBR &gt; -0.25   → <span class="val">SAFE (Zero Burn compliant)</span>
+NBR ≤ -0.25   → <span class="comment">⚠️ Burning event detected</span>
+    </div>
+    <p><strong>Why NIR and SWIR2?</strong> Healthy vegetation contains water in cell tissue that <strong>strongly absorbs SWIR (low B12)</strong> while reflecting NIR strongly → positive NBR. Conversely, charcoal and ash from burning events have 0% water content, causing <strong>SWIR to strongly reflect back from ash (high B12)</strong> → NBR drops deeply negative. The more negative the NBR value, the more severe the burning event.</p>
+    <table class="data-table">
+      <thead><tr><th>NBR Value</th><th>Field Condition</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>&gt; 0.4</td><td>Very healthy vegetation</td><td class="highlight">✓ Very Safe</td></tr>
+        <tr><td class="highlight">0.1 – 0.4</td><td class="highlight">Normal vegetation ← Field data: 0.148</td><td class="highlight">✓ Safe (Zero Burn)</td></tr>
+        <tr><td>-0.1 – 0.1</td><td>Bare soil / post-harvest</td><td>Safe</td></tr>
+        <tr><td class="warn">-0.25 – -0.1</td><td class="warn">⚠️ Light burn indication</td><td class="warn">Warning</td></tr>
+        <tr><td class="danger">&lt; -0.25</td><td class="danger">🔴 Moderate to severe burn detected</td><td class="danger">Violation!</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">3.4 Radar VV — Vertical-Vertical Backscatter (AWD Detection Backbone)</h3>
+    <p><em>Source: ESA Sentinel-1 SAR Technical Guide. Polarimetric backscatter coefficient σ°VV (sigma-nought).</em></p>
+    <div class="formula-box">
+<span class="comment">// Sentinel-1 SAR — C-Band, wavelength 5.6 cm</span>
+<span class="comment">// Polarization: Vertical Transmit → Vertical Receive</span>
+
+σ°VV (linear) = Microwave backscatter coefficient
+<span class="comment">// Conversion: σ°VV (dB) = 10 × log10(σ°VV linear)</span>
+
+<span class="comment">// AgriMRV system thresholds:</span>
+σ°VV ≥ <span class="val">0.28</span>           → Status: <span class="val">WET</span>  (field is flooded)
+σ°VV ≤ <span class="val">0.22</span>           → Status: <span class="val">DRY</span>  (aeration in progress)
+<span class="val">0.22</span> &lt; σ°VV &lt; <span class="val">0.28</span> → <span class="comment">Dead Zone (ambiguous — discarded)</span>
+    </div>
+    <p><strong>Why is VV sensitive to flooding?</strong> A calm water surface acts like a <em>specular mirror</em> for VV waves → signal reflects away from the satellite → <strong>low σ°VV</strong>. Conversely, rough dry soil scatters the signal in multiple directions (<em>volume scattering</em>) → most returns to the satellite antenna → <strong>high σ°VV</strong>.</p>
+    <div class="callout callout-blue">
+      <strong>Why a Dead Zone (0.22–0.28)?</strong>
+      This zone is intentionally designed to prevent false positives. Morning dew on leaf surfaces, strong winds creating ripples on standing water, and satellite incidence angle variations can produce ambiguous VV values. AgriMRV conservatively does not count aeration days when values fall in the dead zone — a key principle for carbon reporting integrity.
+    </div>
+
+    <h3 class="sub-title">3.5 Radar VH/VV — Composite Flood Index</h3>
+    <div class="formula-box">
+<span class="comment">// Sentinel-1 — Cross-polarization: Vertical Transmit → Horizontal Receive</span>
+<span class="comment">// Flood Index used by AgriMRV system:</span>
+
+Flood Index = σ°VH / σ°VV  <span class="comment">(Cross-Polarization Ratio)</span>
+
+<span class="comment">// VH: sensitive to 3D volume & structure of rice canopy</span>
+<span class="comment">// VV: sensitive to ground surface (dry vs wet)</span>
+<span class="comment">// Ratio VH/VV eliminates incidence angle effects,</span>
+<span class="comment">// producing a more stable flood signal throughout the year</span>
+
+<span class="comment">// Actual field data (Made Sengger, 12 Jul 2026): VH/VV = 0.271</span>
+<span class="comment">// → In transition zone (semi-dry)</span>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 4 -->
+    <h2 class="section-title">4. Core Algorithm: Hysteresis & Aeration Day Quantification</h2>
+    <p>AgriMRV does not merely record satellite index values. It applies a <strong>Hysteresis</strong> algorithm to ensure every Aeration Day counted genuinely reflects sustained real-world field conditions — not momentary anomalies.</p>
+
+    <div class="flowchart">
+<span class="step">HYSTERESIS ALGORITHM — Executed per Scan Cycle:</span>
+
+<span class="step">STEP 1 — Sensor Selection:</span>
+<span class="branch">  IF sar_flood_index IS NOT NULL:</span>
+<span class="branch">      v_raw_state ← SAR (Primary Priority)</span>
+<span class="branch">  ELSE IF ndwi_score IS NOT NULL AND cloud_cover &lt;= 15%:</span>
+<span class="branch">      v_raw_state ← NDWI (Optical Fallback)</span>
+
+<span class="step">STEP 2 — Raw Status Determination:</span>
+<span class="branch">  SAR:  VV ≥ 0.28 → raw = 'wet'</span>
+<span class="branch">        VV ≤ 0.22 → raw = 'dry'</span>
+<span class="branch">        dead zone → raw = NULL (skip)</span>
+<span class="branch">  NDWI: score &lt; -0.10 → raw = 'dry'</span>
+<span class="branch">        score ≥ -0.10 → raw = 'wet'</span>
+
+<span class="step">STEP 3 — Hysteresis Check (Anti False-Positive):</span>
+<span class="branch">  IF raw = v_confirmed_state:</span>
+<span class="branch">      → Reset candidate (status unchanged)</span>
+<span class="branch">  ELSE:</span>
+<span class="branch">      → Increment v_candidate_run++</span>
+<span class="branch">      IF v_candidate_run ≥ 2:</span>
+<span class="result">          → TRANSITION CONFIRMED! Official status changes.</span>
+<span class="result">          → v_oscillations++ (record 1 AWD cycle)</span>
+
+<span class="step">STEP 4 — Aeration Day Accumulation:</span>
+<span class="branch">  IF v_confirmed_state = 'dry' AND v_prev_scan_date IS NOT NULL:</span>
+<span class="result">      v_aeration_days += (current_scan_date − previous_scan_date)</span>
+    </div>
+
+    <div class="callout callout-blue">
+      <strong>Why Require a Minimum of 2 Consecutive Scans?</strong>
+      This is the standard signal processing technique to prevent false positives. A single anomaly (e.g., a single day of heavy rain suddenly raising VV mid-dry season) will not change the official status. Status only changes if <strong>two independent scans</strong> (separated by ±5–6 days) consistently show the same condition — a critical safeguard for carbon data integrity.
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 5 -->
+    <h2 class="section-title">5. Carbon Credit Calculation (Verra VM0051 / IPCC Tier 2)</h2>
+
+    <h3 class="sub-title">5.1 Verra VM0051 Methodology</h3>
+    <p>AgriMRV follows the <strong>Verra VM0051</strong> methodology (<em>Adoption of Sustainable Agricultural Land Management</em>), which requires: proof of <em>additionality</em> (demonstrable change from Business-As-Usual practices), a minimum 3-year historical emissions baseline, and quantified project emissions through verified methods.</p>
+
+    <h3 class="sub-title">5.2 Complete Emission Reduction (ER) Formula</h3>
+    <div class="formula-box">
+<span class="comment">// MAIN EMISSION REDUCTION EQUATION</span>
+ER (Ton CO2e) = BE − PE − LE
+
+<span class="comment">// BE = Baseline Emissions (emissions without the project)</span>
+<span class="comment">// PE = Project Emissions (actual emissions after AWD)</span>
+<span class="comment">// LE = Leakage Emissions (assumed = 0 for village-scale projects)</span>
+
+<span class="comment">// ─────────────────────────────────────────────────────</span>
+<span class="comment">// CALCULATION OF PE (Project Emissions) — IPCC Tier 2:</span>
+
+<span class="comment">// Step 1: Total CH4 prevented, gross (kg)</span>
+CH4_gross (kg) = <span class="var">Aeration_Days</span> × <span class="val">EF_AWD</span> × <span class="var">Area_Ha</span>
+              = <span class="var">Aeration_Days</span> × <span class="val">1.22 kg CH4/ha/day</span> × <span class="var">Area_Ha</span>
+
+<span class="comment">// Step 2: Convert to CO2 Equivalent, then net out the accompanying N2O increase</span>
+<span class="comment">// (AWD reduces CH4 but tends to increase N2O — counting CH4 alone overstates the benefit)</span>
+NET CO2e (Ton) = (CH4_gross × <span class="val">GWP_CH4</span> × <span class="val">Net-to-gross factor</span>) / 1000
+              = (CH4_gross × <span class="val">27</span> × <span class="val">0.653</span>) / 1000
+    </div>
+
+    <h3 class="sub-title">5.3 Scientific Basis for Each Variable</h3>
+    <table class="data-table">
+      <thead><tr><th>Variable</th><th>Value</th><th>Scientific Basis</th></tr></thead>
+      <tbody>
+        <tr><td><strong>EF_AWD</strong></td><td>1.22 kg CH4/ha/day</td><td>IPCC 2019 Refinement to the 2006 IPCC Guidelines for National GHG Inventories, Vol. 4 Ch. 5 (Cropland) — Tier 1 default for Southeast Asia</td></tr>
+        <tr><td><strong>GWP CH4</strong></td><td>27</td><td>IPCC AR6 (2021), Working Group I — Global Warming Potential of Methane over 100 years vs CO2</td></tr>
+        <tr><td><strong>Net-to-gross factor</strong></td><td>0.653</td><td>Cross-climate/soil-type meta-analysis of AWD irrigation effects on CH4 &amp; N2O emissions (~64.5% gross CH4 reduction, ~42.1% net GWP reduction after N2O increase) — a general average, not yet calibrated to Bali-specific soil/climate conditions</td></tr>
+        <tr><td><strong>Baseline Period</strong></td><td>3 Years / 1,095 Days</td><td>Verra VM0051 — Minimum 3 years of historical data to prove Business-As-Usual (BAU) flooding practices</td></tr>
+        <tr><td><strong>Land Area</strong></td><td>From GPS registration</td><td>Measured via GIS polygon with GPS coordinates. Made Sengger field: 0.424 ha</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">5.4 Actual Calculation Example — Made Sengger Field</h3>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="val">54</div><div class="unit">Dry Days</div><div class="label">verified by Radar VV</div></div>
+      <div class="stat-card"><div class="val">0.424</div><div class="unit">Hectares</div><div class="label">registered land area</div></div>
+      <div class="stat-card"><div class="val">0.49</div><div class="unit">Ton CO2e</div><div class="label">estimated emission reduction</div></div>
+    </div>
+    <div class="formula-box">
+<span class="comment">// Worked example using Made Sengger field's aeration days and area:</span>
+
+CH4_gross     = <span class="val">54</span> days × <span class="val">1.22</span> kg/ha/day × <span class="val">0.424</span> ha
+              = 54 × 1.22 × 0.424
+              = <span class="val">27.93 kg CH4</span>
+
+NET CO2e      = (27.93 × <span class="val">27</span> × <span class="val">0.653</span>) / 1000
+              = 492.49 / 1000
+              = <span class="val">0.49 Ton CO2e</span>
+    </div>
+    <div class="callout callout-amber">
+      <strong>⚠️ Transparency Disclosure: Internal Estimate Status</strong>
+      The figure above is a Tier 2 estimate based on regional emission factors, not field-level flux chamber measurements (Tier 3). This figure cannot be used for official carbon credit claims before receiving third-party verification from a Verra-accredited auditor. This transparency is intentionally displayed in the system as an anti-greenwashing commitment.
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 6 -->
+    <h2 class="section-title">6. System Resilience Architecture (Response to Cloud Cover)</h2>
+    <p>One of the most critical auditor questions is: <em>"How does the system verify field conditions when 100% cloud cover is present?"</em> AgriMRV employs a multi-layered defense system:</p>
+
+    <table class="data-table">
+      <thead><tr><th>Layer</th><th>Mechanism</th><th>Guarantee</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Layer 1</strong></td><td>Sentinel-1 Radar penetrates clouds (5.6cm microwave)</td><td>Water/flooding data collected 100% unaffected by weather</td></tr>
+        <tr><td><strong>Layer 2</strong></td><td>Growing season time bounds (Planting Date to Actual Harvest)</td><td>Aeration days only counted within verified growing period</td></tr>
+        <tr><td><strong>Layer 3</strong></td><td>Cloud windows — 5-day Sentinel-2 revisit cycle</td><td>In a 6-month growing season, statistically guaranteed clear-sky periods for NDVI cross-check</td></tr>
+        <tr><td><strong>Layer 4</strong></td><td>Radar VH reflects paddy canopy density</td><td>If rice is harvested early or dies, VH drops sharply — anomaly detected</td></tr>
+        <tr><td><strong>Layer 5</strong></td><td>Field photos (geotagged) by farmers/agricultural officers</td><td>Physical visual evidence for each growth stage</td></tr>
+      </tbody>
+    </table>
+    <p>Actual data from Made Sengger's field reinforces this: of 34 optical scans in one growing season, <strong>24 scans (70.6%) were cloud-covered</strong>. Yet the system successfully collected <strong>294 SAR Radar passes</strong> — far richer data, never interrupted by clouds.</p>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 7 — FIGURES -->
+    <h2 class="section-title">7. Visual Evidence — Made Sengger Field, Subak Sangeh, Bali</h2>
+    <p>The nine screenshots below are taken directly from the AgriMRV platform and display real data from the Made Sengger field (0.424 ha, Subak Sangeh, Bali). All data originates from ESA Copernicus public satellites and can be independently verified by any party.</p>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 184858.png" alt="Figure 1 - NDVI Map and Land Boundary Polygon">
+      <div class="caption">
+        <strong>Figure 1 — Satellite True Color Map + GPS Land Boundary Polygon (NDVI Overlay)</strong>
+        Satellite view of Made Sengger's field (0.424 ha) in the Subak Sangeh area of Bali. The thick white outline is the <strong>GPS-registered Land Boundary Polygon</strong> precisely mapped into the system. The dark green color within the polygon is the live NDVI overlay — indicating the field is in active vegetative phase at the time of capture. The layer menu (top right: NDVI, NDWI, NBR, True Color) enables auditors to switch between views in real-time. The bottom legend shows the NDVI color scale from yellow (low) to dark green (high). The "Vegetatif" label on the left map edge is an automatic system output triggered by NDVI = 0.315.
+        <div class="data-note">Registration: <span>0.424 ha</span> · Last scan: <span>15 Jul 2026</span> · Coordinate system: <span>EPSG:4326 (WGS84)</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 184927.png" alt="Figure 2 - Daily Satellite Index Panel">
+      <div class="caption">
+        <strong>Figure 2 — Daily Satellite Index Panel & Independent Data Verification</strong>
+        This panel displays the four satellite index values from the 12 July 2026 scan: <strong>NDVI = 0.315</strong> (active vegetative stage, rice growing healthily), <strong>NDWI = -0.329</strong> (field in DRY condition — falls within the -0.1 to -0.4 range, so an AWD aeration day is recorded on this date), <strong>NBR = 0.148</strong> (no burn indication, Zero Burn confirmed), and <strong>VH/VV = 0.271</strong> (Radar Flood Index in transition zone). Below this, the "Data Source & Verification" panel contains product metadata from Sentinel-2 (Optical) and Sentinel-1 (Radar) along with direct links to <strong>Copernicus Browser for independent verification</strong> — proving that data can be confirmed by any third party without relying on AgriMRV's own systems.
+        <div class="data-note">Cloud cover: <span>0.0%</span> · Radar data per: <span>12 Jul 2026</span> · Verification: <span>dataspace.copernicus.eu</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 184946.png" alt="Figure 3 - NDVI and NDWI 3-Year Trend">
+      <div class="caption">
+        <strong>Figure 3 — 3-Year NDVI &amp; NDWI Time-Series (237 Data Points — Verra VM0051 Standard)</strong>
+        This chart records <strong>237 actual satellite scans</strong> from July 2023 to July 2026 — 3 full years of continuous data. This 3-year span directly fulfills the minimum historical baseline requirement of <strong>Verra VM0051</strong> to prove Business-As-Usual (BAU) flooding practices before the carbon project began. The <strong>mirror-image symmetry</strong> between NDVI (green) and NDWI (blue) is the unique, unfalsifiable "scientific fingerprint" of a healthy rice cultivation cycle. When NDVI rises (rice grows dense, leaves cover the field) → NDWI drops (flooding hidden beneath canopy). When NDWI rises (field re-flooded for new planting) → NDVI drops (no plants yet). This pattern repeats consistently across every growing season over 3 years — proving program continuity and data authenticity per Verra VM0051 standards.
+        <div class="data-note">Total scans: <span>237 data points</span> · Time range: <span>21 Jul 2023 — 15 Jul 2026</span> · Average interval: <span>5 days</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 185000.png" alt="Figure 4 - NBR 3-Year Trend">
+      <div class="caption">
+        <strong>Figure 4 — Zero Burn Monitor: NBR Chart (237 Scans, 3 Years — Verra VM0051 Standard)</strong>
+        The NBR chart from 237 scans over 3 years functions as a year-round "burn detector." This 3-year coverage fulfills the Verra VM0051 requirement to prove historical Zero Burn compliance prior to the project. The pink shaded area below the red dashed line (-0.25) is the <strong>Burn Warning Zone</strong>. Over 3 years of monitoring, <strong>not a single data point has fallen consistently into the red zone</strong> — proving the farmer has strictly adhered to the Zero Burn protocol throughout the entire baseline period. One point that briefly approached approximately -0.2 (around May 2024) is likely attributable to smoke drift from a neighboring field, not from Made Sengger's field itself — the value still remains above the -0.25 threshold and is therefore not counted as a violation.
+        <div class="data-note">Total scans: <span>237 data points</span> · Zero Burn violations: <span>0 events</span> · Detection threshold: <span>NBR &lt; -0.25</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 185017.png" alt="Figure 5 - Sentinel-1 SAR Radar Trend">
+      <div class="caption">
+        <strong>Figure 5 — Sentinel-1 SAR Radar: Cloud-Penetrating AWD Proof (294 Passes, 3 Years — Verra VM0051 Standard)</strong>
+        SAR Radar chart from <strong>294 satellite passes</strong> over 3 years — fulfilling the Verra VM0051 3-year historical baseline standard — and far more passes than the 237 optical scans, precisely because Radar is never blocked by clouds. The thick blue line (VH/VV Ratio = Flood Index) fluctuates in sync with the farmer's alternate flooding and draining cycles. The dashed blue lines are flooding thresholds (0.25 = moderate, 0.40 = high flood). The consistent zig-zag pattern is an irrefutable digital trail of <strong>active AWD practices being conducted in the field</strong>.
+        <div class="data-note">Total SAR passes: <span>294 data points</span> · Acquisition interval: <span>±6 days</span> · Orbit direction: <span>DESCENDING</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 185037.png" alt="Figure 6 - Automatic Insights Panel">
+      <div class="caption">
+        <strong>Figure 6 — Automatic Insights (Rule-Based) + Field Photos Tab</strong>
+        The "Automatic Insights" panel translates numerical satellite indices into agronomic conclusions readable by farmers without a scientific background. The "rule-based" label shows system transparency — conclusions are generated from clearly defined deterministic rules, not a black-box AI model. ✅ "Vegetative stage — active growth, canopy developing well" is triggered by NDVI 0.315 meeting the vegetative threshold (0.3–0.5). ⚠️ "Field detected dry (NDWI -0.33) — consider irrigation" is a contextual reminder that aeration has been sufficiently deep and the farmer should plan the next irrigation cycle. The Field Photos tab is available for uploading geotagged physical evidence as a ground-truthing layer.
+        <p style="margin-top:8px;"><em>Note: this panel is called "Analisis Otomatis" in the current app (renamed from its earlier Indonesian label). The screenshot above has not yet been refreshed and still shows the old on-screen label "Insight Otomatis" — disclosed here openly rather than left unmentioned, pending a replacement screenshot.</em></p>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 185054.png" alt="Figure 7 - Growing Season Tab">
+      <div class="caption">
+        <strong>Figure 7 — Growing Season Tab: Production History & Automatic AWD Pattern Detection</strong>
+        The Growing Season tab records harvest history chronologically. Season 1/2026 (Planting: 16 Jan → Harvest: 10 Jun 2026, yield <strong>1,978 kg paddy</strong>) is displayed with a critical notification: <em>"24 of 34 optical scans cloud-covered (70.6%) — using SAR data as backup."</em> This is direct real-world proof that the <strong>Radar Fallback System worked automatically in the field</strong>. Below this, the system automatically classifies the water management pattern as <strong>"Alternating wet-dry (AWD indication)"</strong> — based on 12 detected transitions from 25 NDWI data points + 42 SAR data points — totaling 67 combined data points per single growing season.
+        <div class="data-note">Cloud cover: <span>70.6%</span> · NDWI points: <span>25</span> · SAR points: <span>42</span> · AWD transitions: <span>12</span></div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Gambar/Screenshot 2026-07-16 185116.png" alt="Figure 8 - Ownership Tab">
+      <div class="caption">
+        <strong>Figure 8 — Ownership Tab: Land Chain of Custody Record</strong>
+        The Ownership tab records the field's chain of custody transparently and in an audit-ready manner. <strong>Made Sengger</strong> is recorded as the active owner since 6 Jul 2026. This feature is critical to ensure that any carbon credits issued are linked to the correct physical identity and can be confirmed. Future ownership/operator changes will be recorded as a timestamped history, guaranteeing that no carbon credits can be claimed by unauthorized parties.
+      </div>
+    </div>
+
+    <div class="figure">
+      <img src="Screenshot_2026-07-19_TabKarbon_MadeSengger_NET049.png.png" alt="Figure 9 - Carbon Tab">
+      <div class="caption">
+        <strong>Figure 9 — Carbon Tab: CO2e Estimate & Verra VM0051 Completeness Checklist</strong>
+        The Carbon tab is the system's most critical output for auditors. It displays <strong>54 Dry Days</strong> (verified by Radar VV, not a unilateral farmer claim) and the corrected <strong>NET CO2e estimate of 0.49 Ton</strong> (see Section 5.4 for the full calculation). The data completeness checklist confirms all Verra VM0051 inputs are present: ✓ GPS Polygon Tracking (0.424 ha), ✓ 3-Year Historical Baseline Data, ✓ AWD Tracker Log (Radar VV Satellite). The amber banner at the top clearly states this is an <strong>"Internal Estimate — Not Yet Validated"</strong> — a transparency commitment ensuring this is not misused as the basis for greenwashing claims prior to field verification.
+        <div class="data-note">Aeration Days: <span>54 days</span> · Area: <span>0.424 ha</span> · NET CO2e: <span>0.49 Ton</span> · Verra Checklist: <span>3/3 ✓</span></div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- CHAPTER 8 -->
+    <h2 class="section-title">8. System Limitations & Transparency Commitments</h2>
+    <p>AgriMRV is fully committed to the principle of scientific honesty. The following limitations are openly acknowledged:</p>
+    <table class="data-table">
+      <thead><tr><th>Limitation</th><th>Impact</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Tier 2 emission factor (1.22 kg CH4/ha/day) is a regional average, not field-specific measurement</td><td>Could over/under-estimate by ±30%</td><td>Transparency label "Internal Estimate"; planned upgrade to Tier 3 with flux chamber measurement</td></tr>
+        <tr><td>No soil type / soil organic carbon (SOC) variables included</td><td>Emission factor may vary between fields</td><td>Soil type input field available for future model refinement</td></tr>
+        <tr><td>Piezometer (water level pipe) ground-truthing is still manual, not IoT</td><td>Potential delay in field data entry</td><td>IoT water level sensor integration planned</td></tr>
+        <tr><td>VV dead zone (0.22–0.28) is not counted</td><td>Slight under-counting of aeration days</td><td>Conservative approach — benefits report integrity</td></tr>
+        <tr><td>Water-pattern classification thresholds (e.g. the "≥5 transitions" oscillation threshold) are set by domain reasoning on a limited sample — currently 6 planting seasons — not by large-scale statistical calibration</td><td>Thresholds may not generalize perfectly to new plots, soil types, or climate patterns until more seasons are analyzed</td><td>Documented explicitly in project migration records; scheduled for recalibration as more seasons are added</td></tr>
+        <tr><td>SAR flood_index (VH/VV) interpretation direction — which values mean "flooded" vs. "dry" — has not yet been cross-validated against farmer-confirmed ground-truth wet/dry dates</td><td>The wet/dry classification underlying all downstream metrics (aeration days, intentionality, CO2e) rests on an unverified directional assumption</td><td>Piezometer ground-truthing (see above) is the planned mechanism to close this gap; not yet completed</td></tr>
+        <tr><td>The 0.653 net-to-gross N2O correction factor is drawn from a general cross-climate/cross-soil-type meta-analysis, not a Bali-specific field study</td><td>The NET CO2e figure may not reflect local soil/climate conditions precisely</td><td>Flagged in all formula documentation; any official claim requires review by a qualified GHG accountant before use</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title">9. Invitation for Collaborative Review</h2>
+    <p>Every figure and threshold in this report is an estimate grounded in satellite data and standard scientific methodology — not a substitute for field measurement or formal carbon audit. We actively invite <strong>Rikolto</strong> and other technical partners to review and challenge this methodology, particularly around field validation and threshold calibration, as part of our ongoing commitment to transparency and continuous improvement.</p>
+
+  </div><!-- /content -->
+
+  <!-- PAGE FOOTER -->
+  <div class="page-footer">
+    <span>AgriMRV-TVR-2026-001-EN • CONFIDENTIAL</span>
+    <span>Presented by Ichan Putra • Save Subak</span>
+    <span>www.savesubak.org</span>
+  </div>
+</div><!-- /page -->
+
+<div class="site-footer">
+  <strong>Save Subak</strong> — <a href="https://www.savesubak.org">www.savesubak.org</a><br>
+  Presented by <strong>Ichan Putra</strong> · AgriMRV Technical Verification Report · 2026
+</div>
+
+</body>
+</html>

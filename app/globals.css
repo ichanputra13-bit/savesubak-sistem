@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F9FAFB;
+  --foreground: #0E2B22;
+  --sinagri-dark: #0E2B22;
+  --sinagri-green: #3C7A3F;
+  --sinagri-light-green: #7BC67E;
+  --sinagri-gray: #6B6B6B;
+  --sinagri-light-gray: #E6E6E6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sinagri-dark: var(--sinagri-dark);
+  --color-sinagri-green: var(--sinagri-green);
+  --color-sinagri-light-green: var(--sinagri-light-green);
+  --color-sinagri-gray: var(--sinagri-gray);
+  --color-sinagri-light-gray: var(--sinagri-light-gray);
+  --font-sans: var(--font-montserrat), 'Montserrat', sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+}
