@@ -52,5 +52,33 @@ export const DASH_CSS = `
 .ssd .pcol b{color:var(--ink);font-size:13px}.ssd .pcol .pb{flex:1;width:100%;display:flex;align-items:flex-end;margin:4px 0}
 .ssd .pcol .pb div{width:100%;background:linear-gradient(var(--leaf),var(--g));border-radius:6px 6px 0 0;min-height:3px}
 .ssd .pcol span{text-align:center;white-space:nowrap}
+
+.ssd .hamb{display:none;margin-left:auto}.ssd .hdr-act{margin-left:auto}
+.ssd .mapbox{height:430px;margin-top:12px}
+.ssd .o-data{margin-top:16px}
+.ssd .pcards{display:none}
+.ssd .pcard{background:var(--card2);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;border:1px solid transparent}.ssd .pcard.sel{border-color:var(--leaf)}
+.ssd .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:8px;font-size:11px;color:var(--mut)}.ssd .pgrid b{display:block;color:var(--ink);font-size:13px}
+.ssd .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media(max-width:1050px){.ssd .charts2{grid-template-columns:1fr}.ssd .wrap{grid-template-columns:1fr}.ssd .sum{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+.ssd{font-size:13px}
+.ssd .hdr{padding:10px 14px;gap:10px}.ssd .hdr h1{font-size:17px}
+.ssd .hamb{display:block}
+.ssd .hdr-act{display:none;width:100%;flex-direction:column;align-items:stretch;margin:0}
+.ssd .hdr-act.open{display:flex}.ssd .hdr-act>*{text-align:center}
+.ssd .wrap{display:flex;flex-direction:column;padding:12px;gap:12px}
+.ssd .lcol,.ssd .rcol{display:contents}
+.ssd .rcol>.card{margin-top:0!important}
+.ssd .o-strip{order:0}.ssd .o-todo{order:1}.ssd .o-map{order:2}.ssd .o-info{order:3}.ssd .o-ring{order:4}
+.ssd .o-data{order:5;margin-top:0}.ssd .o-chart{order:6}.ssd .o-air{order:7}.ssd .o-sasih{order:8}
+.ssd .card{padding:14px}
+.ssd .mapbox{height:300px}
+.ssd .ptwrap{display:none}.ssd .pcards{display:block;max-height:520px}
+.ssd .sum{grid-template-columns:1fr 1fr}.ssd .k .v{font-size:17px}
+.ssd .chip{min-width:132px;padding:8px 12px}.ssd .chip .v{font-size:16px}
+.ssd .hsin{min-width:620px}
+.ssd .ss{min-width:960px}
+.ssd .pbars{height:170px}
+}
 `

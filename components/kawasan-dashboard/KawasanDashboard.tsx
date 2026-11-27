@@ -50,6 +50,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
   const [layer, setLayer] = useState<'air' | 'fase' | 'ndvi'>('air')
   const [selId, setSelId] = useState<string | null>(plots[0]?.id ?? null)
   const [fc, setFc] = useState<Forecast | null>(null)
+  const [menu, setMenu] = useState(false)
   const [done, setDone] = useState<Record<number, boolean>>({})
   const router = useRouter()
   const [scan, setScan] = useState<{ done: number; total: number; ok: number; gagal: number; running: boolean } | null>(null)
@@ -217,7 +218,8 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
       <div className="hdr">
         <div style={{ background: '#fff', borderRadius: 12, padding: 3, display: 'flex' }}><Image src="/logo-save-subak.png" alt="Save Subak" width={40} height={40} unoptimized /></div>
         <div><h1>{kawasan.name}</h1><div className="mut" style={{ fontSize: 12 }}>{kawasan.sub || 'Save Subak Sistem'} · {P.length} petak · {nf(area, 2)} ha</div></div>
-        <div style={{ marginLeft: 'auto' }} className="row">
+        <button className="ghost hamb" onClick={() => setMenu(!menu)} aria-label="Menu">☰</button>
+        <div className={`row hdr-act ${menu ? 'open' : ''}`}>
           <Link href="/kawasan" className="ghost">← Semua kawasan</Link>
           <Link href={`/kawasan/${kawasan.id}/kelola`} className="ghost">⚙ Kelola petak</Link>
           <button className="btn" onClick={scanAll} disabled={scan?.running || plots.length === 0}>
@@ -229,7 +231,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
       <div className="terr" />
 
       <div className="wrap">
-        <div className="strip full">
+        <div className="strip full o-strip">
           {[
             ['Cuaca sekarang', fc ? `${wIcon(fc.days[0]?.code ?? 2)} ${nf(fc.temp, 0)}°C` : last?.temp != null ? `${nf(last.temp, 0)}°C` : '–', fc ? `lembap ${nf(fc.hum, 0)}%` : 'rata-rata harian'],
             ['Hujan kemarin', last?.rain != null ? `${nf(last.rain, 1)} mm` : '–', heavy ? 'lebat — cek pembuangan' : last ? fmt(day0(last.date)) : '', heavy ? 'hot' : ''],
@@ -243,15 +245,18 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
           ))}
         </div>
 
-        <section className="card">
+        <section className="lcol">
+        <div className="card o-map">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3 style={{ margin: 0 }}>Peta petak</h3>
             <div className="tabs">{(['air', 'fase', 'ndvi'] as const).map((l) => <button key={l} className={layer === l ? 'on' : ''} onClick={() => setLayer(l)}>{l === 'air' ? 'Air' : l === 'fase' ? 'Fase' : 'Kehijauan'}</button>)}</div>
           </div>
-          <div style={{ height: 430, marginTop: 12 }}><DashMap plots={mapPlots} onPick={setSelId} /></div>
+          <div className="mapbox"><DashMap plots={mapPlots} onPick={setSelId} /></div>
           <div className="row note">{legend.map(([c, l]) => <span key={l}><span className="dot" style={{ background: c }} />{l}</span>)}</div>
 
-          <h3 style={{ marginTop: 18 }}>Data petak lahan</h3>
+        </div>
+        <div className="card o-data">
+          <h3>Data petak lahan</h3>
           <div className="sum">
             {[
               ['Rata-rata produktivitas kawasan', avgProd != null ? `${nf(avgProd)} t/ha` : '–', avgProd != null ? 'GKP · musim lalu' : 'belum ada catatan panen'],
@@ -260,7 +265,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
               ['Panen terdekat', nextPanen ? fmt(nextPanen) : '–', nextPanen ? `${Math.round((+nextPanen - +today) / DAY)} hari lagi` : 'tanggal tanam belum diisi'],
             ].map((k) => <div key={k[0]} className="k"><div className="l">{k[0]}</div><div className="v">{k[1]}</div><div className="l">{k[2]}</div></div>)}
           </div>
-          <div className="scroll10">
+          <div className="scroll10 ptwrap">
           <table className="pt">
             <thead><tr><th>Petak</th><th>Luas</th><th>Tanaman</th><th>Tanam</th><th>Perkiraan panen</th><th>Produktivitas lalu</th></tr></thead>
             <tbody>
@@ -277,11 +282,28 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
             </tbody>
           </table>
           </div>
+          <div className="pcards scroll10">
+            {P.map((p) => (
+              <div key={p.id} className={`pcard ${p.id === sel?.id ? 'sel' : ''}`} onClick={() => setSelId(p.id)}>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <b><span className="dot" style={{ background: color(p) }} />Petak {p.no} <span className="mut" style={{ fontWeight: 400 }}>· {nf(p.area, 2)} ha</span></b>
+                  {p.phase && <span className="tag">{PHASE[p.phase]?.[0] ?? p.phase}</span>}
+                </div>
+                <div className="pgrid">
+                  <span>Tanaman<b>Padi {p.variety ?? '–'}</b></span>
+                  <span>Tanam<b>{p.tanam ? `${fmt(p.tanam)} ✓` : 'belum diisi'}</b></span>
+                  <span>Perkiraan panen<b>{p.panen ? fmt(p.panen) : '–'}</b></span>
+                  <span>Produktivitas lalu<b>{p.prod != null ? `${nf(p.prod)} t/ha` : '–'}</b></span>
+                </div>
+              </div>
+            ))}
+          </div>
           <div className="note">{P.length > 10 ? `${P.length} petak — gulir tabel untuk melihat semua. ` : ''}Produktivitas = hasil panen GKP per ha musim terakhir yang tercatat. Tanggal tanam ✓ = dari data musim tanam; perkiraan panen = tanggal tanam + umur varietas.</div>
+        </div>
         </section>
 
-        <aside>
-          <div className="card">
+        <aside className="rcol">
+          <div className="card o-todo">
             <h3>Saran untuk pekaseh</h3>
             <ul className="todo">
               {todos.map((t, i) => (
@@ -293,7 +315,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
           </div>
 
           {sel && (
-            <div className="card" style={{ marginTop: 14 }}>
+            <div className="card o-info" style={{ marginTop: 14 }}>
               <h3>Info petak lahan</h3>
               <div className="row" style={{ justifyContent: 'space-between' }}><b style={{ fontSize: 18 }}>Petak {sel.no}</b>
                 <span className="tag" style={{ color: sel.wet == null ? undefined : sel.wet ? '#3fb6d3' : '#c9a46a' }}>{sel.wet == null ? 'Belum ada radar' : sel.wet ? 'Tergenang' : 'Kering'}</span></div>
@@ -311,7 +333,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
             </div>
           )}
 
-          <div className="card" style={{ marginTop: 14 }}>
+          <div className="card o-ring" style={{ marginTop: 14 }}>
             <h3>Ringkasan kawasan</h3>
             <div className="kpis">
               <div className="k"><div className="l">Kehijauan rata-rata</div><div className="v">{avgNdvi != null ? nf(avgNdvi, 2) : '–'}</div></div>
@@ -322,7 +344,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
           </div>
         </aside>
 
-        <div className="card full">
+        <div className="card full o-chart">
           <div className="charts2">
             <div>
               <h3>Produktivitas rata-rata per musim</h3>
@@ -356,11 +378,12 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
           </div>
         </div>
 
-        <div className="card full">
+        <div className="card full o-air">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3 style={{ margin: 0 }}>Kalender air per petak · 30 hari terakhir</h3>
             <div className="mut" style={{ fontSize: 12 }}><span className="dot" style={{ background: 'var(--w)' }} />tergenang <span className="dot" style={{ background: 'var(--dry)', marginLeft: 8 }} />kering <span className="dot" style={{ background: 'var(--line)', marginLeft: 8 }} />tak ada data · warna pudar = perkiraan · batang atas = hujan harian</div>
           </div>
+          <div className="hscroll"><div className="hsin">
           <div className="wc" style={{ marginTop: 10, gridTemplateColumns: `70px repeat(${N}, minmax(0,1fr))` }}>
             <div className="n">Hujan</div>
             {days.map((d) => { const r = rainBy.get(key(d)) ?? 0; return <div key={+d} style={{ height: 30, display: 'flex', alignItems: 'flex-end' }} title={`${fmt(d)} · ${nf(r, 1)} mm`}><div style={{ width: '100%', height: Math.min(30, r / 2), background: 'var(--w)', opacity: 0.55, borderRadius: '2px 2px 0 0' }} /></div> })}
@@ -372,15 +395,16 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
             <div />
             {days.map((d, i) => <div key={'l' + i} className="mut" style={{ textAlign: 'center' }}>{i % 5 === 0 ? d.getDate() : ''}</div>)}
           </div>
+          </div></div>
           {P.length > 10 && <div className="note">{P.length} petak — gulir untuk melihat semua.</div>}
         </div>
 
-        <div className="card full">
+        <div className="card full o-sasih">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3 style={{ margin: 0 }}>Kalender sasih & musim tanam · 12 bulan</h3>
             <div className="mut" style={{ fontSize: 12 }}><span style={{ border: '2px dashed var(--mut)', padding: '0 8px', borderRadius: 4 }}>perkiraan sistem</span> &nbsp; <span style={{ background: 'var(--g)', color: '#fff', padding: '1px 8px', borderRadius: 4 }}>dari data musim tanam</span></div>
           </div>
-          <div className="ss" style={{ marginTop: 12 }}>
+          <div className="hscroll"><div className="ss" style={{ marginTop: 12 }}>
             <div className="lab">Sasih</div>
             {M.map((m) => <div key={+m.s} className="hd">{m.name}<small>{fmt(m.s)} – {fmt(m.e)}</small></div>)}
             <div className="lab">Bulan</div>
@@ -395,6 +419,7 @@ export default function KawasanDashboard({ kawasan, plots, weather, seasons }: P
               ))}
               <div className="today" style={{ left: `${pc(today)}%` }} title="Hari ini" />
             </div>
+          </div>
           </div>
           <div className="note">Purnama/Tilem dihitung dari posisi bulan; sasih & hari raya dari kalender Saka dan pawukon. Sesekali bisa bergeser 1 hari (ngunaratri) — cocokkan dengan kalender Bali cetak. Konfirmasi tahap oleh pekaseh tersedia setelah fitur login.</div>
         </div>
