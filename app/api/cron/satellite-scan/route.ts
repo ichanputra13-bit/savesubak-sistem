@@ -11,6 +11,13 @@ import { estimatePhase, fetchSentinelStats, pickClearestInterval, NDVI_EVALSCRIP
 
 const SAR_INTERVAL_DAYS = 6
 const NDVI_WINDOW_DAYS = 10
+// 27 Nov 2026: Vercel Hobby memotong fungsi ±5 menit — dulu cron selalu
+// terhenti setelah 13–45 petak (dibuktikan dari jejak created_at weather_logs
+// 25–27 Nov). Sekarang: cuaca 1x per kawasan, satelit bergiliran (petak yang
+// paling lama belum di-scan dulu) dan berhenti rapi sebelum batas waktu.
+const TIME_BUDGET_MS = 240_000
+const MAX_SAT_PLOTS = 60
+export const maxDuration = 300
 
 function round4(v: number) { return Math.round(v * 10000) / 10000 }
 
@@ -27,7 +34,7 @@ export async function GET(request: Request) {
   const windowFrom = new Date(Date.now() - NDVI_WINDOW_DAYS * 86400000).toISOString().split('T')[0]
 
   const [{ data: plots, error: plotsError }, { data: activeSeasons }] = await Promise.all([
-    supabase.from('v_plots').select('id, geo_data, scan_interval_days'),
+    supabase.from('v_plots').select('id, kawasan_id, geo_data, scan_interval_days'),
     supabase.from('planting_seasons').select('plot_id, planting_date').eq('status', 'aktif'),
   ])
 
@@ -39,9 +46,47 @@ export async function GET(request: Request) {
     (activeSeasons ?? []).map((s: { plot_id: string; planting_date: string }) => [s.plot_id, s.planting_date])
   )
 
-  const summary = { scanned: 0, skipped: 0, sarScanned: 0, failed: 0, details: [] as string[] }
+  const summary = { scanned: 0, skipped: 0, sarScanned: 0, failed: 0, weatherKawasan: 0, weatherRows: 0, stoppedEarly: false, details: [] as string[] }
+  const t0 = Date.now()
 
-  for (const plot of plots ?? []) {
+  // ── 1. Cuaca: SEKALI per kawasan (titik tengah semua petaknya), disimpan ke semua petak ──
+  const byKawasan = new Map<string, NonNullable<typeof plots>>()
+  for (const p of plots ?? []) byKawasan.set(p.kawasan_id, [...(byKawasan.get(p.kawasan_id) ?? []), p])
+  const weatherFrom = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0]
+  for (const [kid, kplots] of byKawasan) {
+    try {
+      const cs = kplots.map((p) => plotCentroid(p)).filter((c): c is [number, number] => !!c)
+      if (!cs.length) continue
+      const lat = cs.reduce((a, c) => a + c[0], 0) / cs.length, lon = cs.reduce((a, c) => a + c[1], 0) / cs.length
+      const days = await fetchWeatherRange(lat, lon, weatherFrom, today)
+      const rows = kplots.flatMap((p) => days.map((w) => ({
+        plot_id: p.id, date: w.date, rainfall_mm: w.rainfall_mm, temp_avg_c: w.temp_avg_c, humidity_avg_pct: w.humidity_avg_pct,
+        temp_min_c: w.temp_min_c, temp_max_c: w.temp_max_c, wind_speed_max_ms: w.wind_speed_max_ms, wind_gust_max_ms: w.wind_gust_max_ms,
+        wind_dir_deg: w.wind_dir_deg, pressure_hpa: w.pressure_hpa, radiation_mj_m2: w.radiation_mj_m2, sunshine_hours: w.sunshine_hours,
+        et0_mm: w.et0_mm, soil_moisture_m3m3: w.soil_moisture_m3m3, source: 'open-meteo',
+      })))
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await supabase.from('weather_logs').upsert(rows.slice(i, i + 500), { onConflict: 'plot_id,date' })
+        if (error) throw new Error(error.message)
+      }
+      summary.weatherKawasan++; summary.weatherRows += rows.length
+    } catch (weatherErr) {
+      summary.details.push(`kawasan ${kid.slice(0, 8)}: weather error (${String(weatherErr).slice(0, 80)})`)
+    }
+  }
+
+  // ── 2. Satelit: bergiliran — tiap hari mulai dari posisi berbeda dalam daftar
+  // petak (urut id), jadi semua petak kebagian merata (±tiap 6–7 hari untuk
+  // ±370 petak) dan petak yang terus berawan tidak memblokir petak lain.
+  const sorted = [...(plots ?? [])].sort((a, b) => a.id.localeCompare(b.id))
+  const dayNo = Math.floor(Date.now() / 86400000)
+  const start = sorted.length ? (dayNo * MAX_SAT_PLOTS) % sorted.length : 0
+  const queue = [...sorted.slice(start), ...sorted.slice(0, start)]
+  let processed = 0
+
+  for (const plot of queue) {
+    if (Date.now() - t0 > TIME_BUDGET_MS || processed >= MAX_SAT_PLOTS) { summary.stoppedEarly = true; break }
+    processed++
     try {
       // ── NDVI/NDWI — adaptive interval check ──────────────────────────────────
       const { data: recentLogs } = await supabase
@@ -163,43 +208,6 @@ export async function GET(request: Request) {
           summary.details.push(`${plot.id.slice(0, 8)}: SAR no data in window`)
         }
       }
-
-      // ── Cuaca (Open-Meteo) — gratis, tanpa kuota, jalan tiap hari ────────────
-      // Window 3 hari ke belakang untuk nutup kalau ada hari yang kelewat.
-      try {
-        const centroid = plotCentroid(plot)
-        if (centroid) {
-          const [lat, lon] = centroid
-          const weatherFrom = new Date()
-          weatherFrom.setDate(weatherFrom.getDate() - 3)
-          const weatherFromStr = weatherFrom.toISOString().split('T')[0]
-
-          const weatherDays = await fetchWeatherRange(lat, lon, weatherFromStr, today)
-          for (const w of weatherDays) {
-            await supabase.from('weather_logs').upsert({
-              plot_id: plot.id,
-              date: w.date,
-              rainfall_mm: w.rainfall_mm,
-              temp_avg_c: w.temp_avg_c,
-              humidity_avg_pct: w.humidity_avg_pct,
-              temp_min_c: w.temp_min_c,
-              temp_max_c: w.temp_max_c,
-              wind_speed_max_ms: w.wind_speed_max_ms,
-              wind_gust_max_ms: w.wind_gust_max_ms,
-              wind_dir_deg: w.wind_dir_deg,
-              pressure_hpa: w.pressure_hpa,
-              radiation_mj_m2: w.radiation_mj_m2,
-              sunshine_hours: w.sunshine_hours,
-              et0_mm: w.et0_mm,
-              soil_moisture_m3m3: w.soil_moisture_m3m3,
-              source: 'open-meteo',
-            }, { onConflict: 'plot_id,date' })
-          }
-        }
-      } catch (weatherErr) {
-        summary.details.push(`${plot.id.slice(0, 8)}: weather error (${String(weatherErr).slice(0, 80)})`)
-      }
-
     } catch (err) {
       summary.failed++
       summary.details.push(`${plot.id.slice(0, 8)}: error (${String(err).slice(0, 80)})`)
@@ -208,5 +216,5 @@ export async function GET(request: Request) {
     await new Promise((r) => setTimeout(r, 500))
   }
 
-  return NextResponse.json({ date: today, ...summary })
+  return NextResponse.json({ date: today, plots: plots?.length ?? 0, processed, durationSec: Math.round((Date.now() - t0) / 1000), ...summary })
 }

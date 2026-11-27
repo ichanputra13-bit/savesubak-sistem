@@ -2324,3 +2324,14 @@ Kalau hasilnya cuma `spatial_ref_sys` yang `rowsecurity=false` → aman, insiden
 **Status berikutnya:** Ichan cek tampilan HP (preview `tampilan-hp`) lalu gabung ke main; Tahap 3 peta Bali publik; Tahap 4 login & peran.
 
 ---
+
+## [2026-11-27 20:20] — Cron satelit: cuaca per kawasan + scan bergiliran dengan batas waktu
+
+**Dikerjakan:**
+- Bukti masalah: jejak `created_at` weather_logs 25–27 Nov menunjukkan cron berhenti setelah 1–3 menit dan cuma memproses 13–45 dari ±370 petak (batas waktu fungsi Vercel Hobby). Log runtime Vercel Hobby hanya tersimpan ±1 jam, jadi tidak bisa dilihat.
+- Cuaca kini diambil 1x per kawasan (titik tengah semua petak) lalu di-upsert ke semua petaknya (batch 500).
+- Satelit bergiliran: maks 60 petak/hari, mulai dari posisi berbeda tiap hari (urut id), berhenti rapi setelah 240 detik (`maxDuration` 300).
+
+**Status berikutnya:** cek ringkasan respons cron (durationSec, processed, weatherRows) setelah dijalankan.
+
+---
