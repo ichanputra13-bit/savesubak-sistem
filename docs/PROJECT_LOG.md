@@ -2304,3 +2304,23 @@ Kalau hasilnya cuma `spatial_ref_sys` yang `rowsecurity=false` → aman, insiden
 **Status berikutnya:** menunggu hasil (1)–(2). Setelah host DB diganti, `run-migration.js` & query `pg` langsung bisa dipakai lagi untuk migration/investigasi berikutnya. Cron belum dibuktikan jalan di produksi (belum deploy) — saat deploy, cek `satellite_logs` hari berikutnya terisi NDVI/NDWI.
 
 ---
+
+## [2026-11-27 12:45] — Rebranding Save Subak Sistem, perbaikan scan awan, dashboard kawasan baru, halaman petak sederhana
+
+**Dikerjakan (26–27 Nov 2026):**
+- Scan: cron & scan manual memilih citra Sentinel-2 PALING CERAH dari jendela 10 hari (cron) / 30 hari (manual) — `pickClearestInterval` di `lib/sentinel-hub/formulas.ts`. Cron tidak lagi menyimpan baris kosong; jadwal cron 01:00 → 07:00 UTC (15:00 WITA). 65 baris kosong lama dihapus (atas izin Ichan).
+- Cuaca: `weather_logs` + kolom angin/hembusan/arah, tekanan, radiasi, penyinaran, ET0, kelembapan tanah (migration `v26_weather_logs_extended`).
+- Tombol tarik baseline 3 tahun dihapus (keputusan Ichan, tidak pakai Verra).
+- Nama & logo: Save Subak Sistem (topbar, judul, ikon).
+- `/kawasan/[id]` sekarang = dashboard baru (`components/kawasan-dashboard/*`): mode gelap/terang, strip kondisi + prakiraan Open-Meteo, peta, saran pekaseh, data petak (produktivitas), grafik produktivitas per musim + NDVI/NDWI, kalender air, kalender sasih (`lib/bali-calendar.ts`). Halaman kawasan lama → `/kawasan/[id]/kelola`.
+- Tampilan HP dashboard (branch `tampilan-hp`).
+- Halaman petak baru sederhana `components/plots/PlotSimple.tsx` (270 baris) untuk petani/PPL: kondisi dalam kata-kata, 1 grafik, musim tanam + catat panen, foto & catatan. Versi lengkap lama (PlotDashboard.tsx, 2216 baris) dipindah ke `/kawasan/[id]/plot/[pid]/kelola`.
+- Repo GitHub `ichanputra13-bit/savesubak-sistem` (branch `main`) tersambung ke Vercel — push = deploy otomatis.
+
+**Keputusan/catatan penting:**
+- Karbon = perkiraan sederhana (IPCC 1,22 kg CH4/ha/hari × 45% pengurangan AWD × GWP 27), bukan untuk klaim/audit.
+- update_owner.html belum diperbarui untuk perubahan ini.
+
+**Status berikutnya:** Ichan cek tampilan HP (preview `tampilan-hp`) lalu gabung ke main; Tahap 3 peta Bali publik; Tahap 4 login & peran.
+
+---
